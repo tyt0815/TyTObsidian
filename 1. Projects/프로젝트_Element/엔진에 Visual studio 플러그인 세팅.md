@@ -1,4 +1,3 @@
-- [x] 커스텀 엔진 Visual studio 플러그인 설치 ✅ 2024-01-03
 https://github.com/microsoft/vc-ue-extensions#readme
 1. 플러그인을 클론한다.
 2. 엔진의 루트폴더의 Plugins폴더에 넣어준다.
