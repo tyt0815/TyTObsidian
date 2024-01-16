@@ -1,4 +1,6 @@
-공격시 마법진을 생성할 위치를 계산한다.
+# Character Front 마법진
+- [ ] ChracterFront 마법진 구현
+기본공격시 마법진을 생성할 위치를 계산한다.
 기본적으로 공중에 떠있는 마법진을 계산할것 이다.
 기본 아이디어는 이렇다.
 ![[Pasted image 20240108221938.png]]
@@ -16,5 +18,19 @@
 ![[Pasted image 20240108224042.png]]
 위와 같이 나오게 된다.
 
-# BugFix
+## BugFix
 [[캐릭터 회전시 카메라 회전 버그]]
+
+# Fly 마법진
+- [ ] Fly 마법진 구현
+![[Drawing 2024-01-16 17.15.21.excalidraw]]
+![[Drawing 2024-01-16 17.19.23.excalidraw]]
+포탈 마법을 사용할때 사용할 마법진
+# Floor 마법진
+- [ ] Floor 마법진 구현
+![[Drawing 2024-01-16 17.20.42.excalidraw]]
+![[Drawing 2024-01-16 17.21.28.excalidraw]]
+# TopDown 마법
+- [ ] TopDown 마법
+![[Drawing 2024-01-16 17.20.42.excalidraw]]
+![[Drawing 2024-01-16 17.25.34.excalidraw]]
