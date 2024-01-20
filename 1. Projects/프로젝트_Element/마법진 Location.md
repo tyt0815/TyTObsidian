@@ -22,15 +22,15 @@
 [[캐릭터 회전시 카메라 회전 버그]]
 
 # Fly 마법진
-- [ ] Fly 마법진 구현
+- [x] Fly 마법진 구현 ✅ 2024-01-20
 ![[Drawing 2024-01-16 17.15.21.excalidraw]]
 ![[Drawing 2024-01-16 17.19.23.excalidraw]]
 포탈 마법을 사용할때 사용할 마법진
 # Floor 마법진
-- [ ] Floor 마법진 구현
+- [x] Floor 마법진 구현 ✅ 2024-01-20
 ![[Drawing 2024-01-16 17.20.42.excalidraw]]
 ![[Drawing 2024-01-16 17.21.28.excalidraw]]
 # TopDown 마법
-- [ ] TopDown 마법
+- [x] ~~TopDown 마법~~(취소, Floor마법진으로 통합) ✅ 2024-01-20
 ![[Drawing 2024-01-16 17.20.42.excalidraw]]
 ![[Drawing 2024-01-16 17.25.34.excalidraw]]
