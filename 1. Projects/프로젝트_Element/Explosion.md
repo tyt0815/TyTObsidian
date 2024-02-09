@@ -15,4 +15,4 @@ void AExplosion::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 이유는 구조적인 문제였다. Explosion액터가 생성 -> Delay값 설정 -> Overlap 순서로 설계했는데 생성된 직후에는 Overlap -> Delay값 설정순으로 실행되었다.
 
 # 해결
-미뤄왔던 Object pooling을 이용해서 해결예정.
+구조 수정
