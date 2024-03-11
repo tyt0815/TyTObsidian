@@ -1,6 +1,39 @@
 에이펙스 레전드의 호라이즌의 스킬 Q(중력리프트) 와 비슷하게 구현하고 싶었다.
 
 # 수정
+## 1.2
+1.0버전과 같이 AddForce를 통해 구현했다. 1.1의 경우 Tornado가 겹쳐있을때 버그가 발생하기 쉽고, 고치기 는 번거로워 AddForce를 통해 구현한다.
+```cpp
+void ATornado::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	TArray<AActor*> FlyActorsToIgnore;
+	while (true)
+	{
+		FHitResult HitResult;
+		BoxTrace(HitResult, FlyActorsToIgnore);
+		if (HitResult.GetActor() == nullptr) break;
+		if (HitResult.GetActor() == GetOwner())
+		{
+			ACharacter* Character = Cast<ACharacter>(HitResult.GetActor());
+			if (Character)
+			{
+				Character->GetCharacterMovement()->Velocity.Z = UpSpeed;
+			}
+		}
+	}
+}
+
+void ATornado::BeginBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	ACharacter* Character = Cast<ACharacter>(OtherActor);
+	if (Character)
+	{
+		Character->GetCharacterMovement()->AddForce(10000000.0f * FVector::ZAxisVector);
+	}
+}
+```
 ## 1.1
 ### SetMovementMode
 아래 방법과 달리 CharacterMovementComponent의 SetMovementMode를 통해 Fly모드로 만들어 구현하는 방식으로 변경. Tornado에 오버랩 될때 Fly로 바꾸고, 오버랩에서 빠져나올때 Walking으로 되돌려 준다.
