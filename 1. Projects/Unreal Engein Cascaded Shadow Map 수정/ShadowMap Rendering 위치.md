@@ -16,7 +16,17 @@ void FDeferredShadingSceneRenderer::Render(FRDGBuilder& GraphBuilder)
 void FSceneRenderer::RenderShadowDepthMaps(FRDGBuilder& GraphBuilder, FInstanceCullingManager &InstanceCullingManager, FRDGExternalAccessQueue& ExternalAccessQueue)
 {
 	...
-
+	// 1685번째 줄
+	RenderShadowDepthMapAtlases(GraphBuilder);
+	...
+}
+```
+```cpp
+// 1527번째 줄
+void FSceneRenderer::RenderShadowDepthMapAtlases(FRDGBuilder& GraphBuilder)
+{
+	...
+	
 	...
 }
 ```
