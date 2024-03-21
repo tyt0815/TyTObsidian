@@ -138,3 +138,6 @@ class FShadowCascadeSettings
 1>C:\Users\user\Documents\TyT\UnrealEngine\5.3.2\Engine\Source\Runtime\Renderer\Private\ShadowRendering.h(1138): error C2039: 'SplitNear': 'FShadowCascadeSettings'의 멤버가 아닙니다.
 1>C:\Users\user\Documents\TyT\UnrealEngine\5.3.2\Engine\Source\Runtime\Engine\Public\LightSceneProxy.h(19): note: 'FShadowCascadeSettings' 선언을 참조하십시오.
 ```
+
+# 참조
+[New shading models and changing the GBuffer](https://dev.epicgames.com/community/learning/tutorials/2R5x/unreal-engine-new-shading-models-and-changing-the-gbuffer)
