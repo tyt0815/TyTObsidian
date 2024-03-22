@@ -141,3 +141,4 @@ class FShadowCascadeSettings
 
 # 참조
 [New shading models and changing the GBuffer](https://dev.epicgames.com/community/learning/tutorials/2R5x/unreal-engine-new-shading-models-and-changing-the-gbuffer)
+[엔진 시작하기 - 렌더링](https://dev.epicgames.com/community/learning/tutorials/7BY6/unreal-engine-7eb4ec)
