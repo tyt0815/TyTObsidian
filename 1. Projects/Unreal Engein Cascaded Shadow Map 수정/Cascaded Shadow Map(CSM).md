@@ -21,7 +21,7 @@ class FShadowCascadeSettings
 	...
 }
 ```
-해당 코드를 보면 언리얼 엔진은 3케스케이디드 섀도우 맵임을 알 수 있다. 이부분을 아래 영상을 참고하여 8 케스케이디드로 수정해 본다.
+해당 코드를 보면 언리얼 엔진은 4케스케이디드 섀도우 맵임을 알 수 있다. 이부분을 아래 영상을 참고하여 8 케스케이디드로 수정해 본다.
 [유나이트 서울 2020 - 원신 콘솔 플랫폼 개발 경험 및 렌더링 파이프라인 기술 소개 Track3-1](https://www.youtube.com/watch?v=00QugD5u1CU&list=PLh5wglWuOGseWAY_9bTjJvvLvtapUW_Sj&index=1&t=753s)
 
 수정해야 하는 부분 목록
