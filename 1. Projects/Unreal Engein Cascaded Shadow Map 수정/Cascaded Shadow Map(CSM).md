@@ -143,3 +143,4 @@ class FShadowCascadeSettings
 [New shading models and changing the GBuffer](https://dev.epicgames.com/community/learning/tutorials/2R5x/unreal-engine-new-shading-models-and-changing-the-gbuffer)
 [엔진 시작하기 - 렌더링](https://dev.epicgames.com/community/learning/tutorials/7BY6/unreal-engine-7eb4ec)
 [UE5 - Anime/Toon/Cel Shading Model \(WORKS WITH LAUNCHER ENGINE VERSIONS](https://forums.unrealengine.com/t/ue5-anime-toon-cel-shading-model-works-with-launcher-engine-versions/544226)
+https://epicgames.ent.box.com/s/ul1h44ozs0t2850ug0hrohlzm53kxwrz
