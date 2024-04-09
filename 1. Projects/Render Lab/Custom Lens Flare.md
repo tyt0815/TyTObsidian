@@ -200,3 +200,38 @@ public:
 };
 
 ```
+
+**PostProcessLensFlares.h**파일에서, `struct FLensFlareInputs`에 새로운 파라미터를 추가해 준다. 이 구조체는 포스트 프로세스 렌더링 단계에서 렌더링 패스 자체로 몇 가지 설정을 전송하는데 사용된다.
+```cpp
+struct FLensFlareInputs
+{
+	static const uint32 LensFlareCountMax = 8;
+
+	// [Required] The bloom convolution texture. If enabled, this will be composited with lens flares. Otherwise,
+	// a transparent black texture is used instead. Either way, the final output texture will use the this texture
+	// descriptor and viewport.
+	FScreenPassTexture Bloom;
+
+	// TyT
+	// Scene color at half resolution
+	FScreenPassTexture HalfSceneTexture;
+	
+	// [Required] The scene color input, before bloom, which is used as the source of lens flares.
+	// This can be a downsampled input based on the desired quality level.
+	FScreenPassTexture Flare;
+	[...]
+}
+```
+
+이 구조체 바로 아래에, 새로운 구조체를 만들어 준다.
+```cpp
+// TyT
+struct FLensFlareOutputsData
+{
+	FRDGTextureRef Texture;
+	FIntRect Rect;
+};
+// TyT
+```
+이 구조체는 커스텀 코드에서 포스트 프로세스 렌더링 패스로 데이터를 보내는데 사용된다.
+
