@@ -1,0 +1,12 @@
+.code, pre {
+    word-wrap: break-word;
+    white-space: pre;
+    overflow-x: auto;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+/* 이게 있어야 줄바꿈이 됨 /
+pre > code, code[class="language-"] {
+    white-space: pre !important;
+}

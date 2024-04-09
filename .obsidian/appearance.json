@@ -1,4 +1,7 @@
 {
   "accentColor": "#2aadfe",
-  "theme": "moonstone"
+  "theme": "moonstone",
+  "enabledCssSnippets": [
+    "obsidian"
+  ]
 }
