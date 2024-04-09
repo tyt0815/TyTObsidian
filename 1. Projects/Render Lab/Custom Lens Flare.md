@@ -89,3 +89,10 @@ float2 InputViewportSize;
 위 코드들은 공용 변수들이며, 모든 패스에서 사용될 편수들이다. 다른 파일은 뒤에 다루도록 한다.
 
 # 3. Data Asset
+해당 글에서 렌즈 플레어는 데이터 에셋과 콘솔 변수로 관리된다. 먼저 데이터 에셋부터 설정한다.
+
+**DataAsset**을 상속하는 새로운 클래스를 만들어 준다.
+**PostProcessLensFlareAsset.h**
+```cpp
+	
+```
