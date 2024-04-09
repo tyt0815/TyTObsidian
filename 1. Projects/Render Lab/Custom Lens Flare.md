@@ -235,3 +235,18 @@ struct FLensFlareOutputsData
 ```
 이 구조체는 커스텀 코드에서 포스트 프로세스 렌더링 패스로 데이터를 보내는데 사용된다.
 
+그리고 마지막으로 `AddLensFlaresPass()` 함수에 파라미터를 추가해 준다.
+```cpp
+// Helper function which pulls inputs from the post process settings of the view.
+FScreenPassTexture AddLensFlaresPass(
+	FRDGBuilder& GraphBuilder,
+	const FViewInfo& View,
+	FScreenPassTexture Bloom,
+	FScreenPassTexture HalfSceneColor,	// TyT
+	const FSceneDownsampleChain& SceneDownsampleChain);
+```
+
+이제 **PostProcessing.cpp**에서 `AddLensFlaresPass()`를 호출하는 부분을 수정해 준다.
+```cpp
+
+```
