@@ -6,7 +6,7 @@
     line-height: 1.5;
 }
 
-/* 이게 있어야 줄바꿈이 됨 /
+
 pre > code, code[class="language-"] {
     white-space: pre !important;
 }

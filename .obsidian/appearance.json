@@ -2,6 +2,7 @@
   "accentColor": "#2aadfe",
   "theme": "moonstone",
   "enabledCssSnippets": [
-    "obsidian"
+    "obsidian",
+    "SourceBlockHorizontalScrollbar"
   ]
 }
