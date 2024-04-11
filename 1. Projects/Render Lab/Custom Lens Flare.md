@@ -201,6 +201,7 @@ public:
 
 ```
 
+# 4. 엔진 렌더링 패스 수정
 **PostProcessLensFlares.h**파일에서, `struct FLensFlareInputs`에 새로운 파라미터를 추가해 준다. 이 구조체는 포스트 프로세스 렌더링 단계에서 렌더링 패스 자체로 몇 가지 설정을 전송하는데 사용된다.
 ```cpp
 struct FLensFlareInputs
@@ -248,5 +249,99 @@ FScreenPassTexture AddLensFlaresPass(
 
 이제 **PostProcessing.cpp**에서 `AddLensFlaresPass()`를 호출하는 부분을 수정해 준다.
 ```cpp
-
+if (bLensFlareEnabled)
+{	
+	Bloom = AddLensFlaresPass(GraphBuilder, View, Bloom, HalfResSceneColor, *LensFlareSceneDownsampleChain);	// TyT
+}
 ```
+
+**PostProcessLensFlares.cpp**의 최상단부 `#include` 밑에, 아래 코드를 추가해 delegate를 선언해 준다.
+```cpp
+// TyT
+DECLARE_MULTICAST_DELEGATE_FourParams(FPP_LensFlares, FRDGBuilder&, const FViewInfo&, const FLensFlareInputs&, FLensFlareOutputsData&);
+RENDERER_API FPP_LensFlares PP_LensFlares;
+// TyT
+```
+
+비교를 용의하게 하기 위해, 콘솔 변수를 추가해 이전 버전의 렌즈 플레어와 커스텀 렌즈 플레어를 변환 가능하게 설정한다.
+```cpp
+TAutoConsoleVariable<int32> CVarLensFlareQuality(
+	TEXT("r.LensFlareQuality"),
+	2,
+	TEXT(" 0: off but best for performance\n")
+	TEXT(" 1: low quality with good performance\n")
+	TEXT(" 2: good quality (default)\n")
+	TEXT(" 3: very good quality but bad performance"),
+	ECVF_Scalability | ECVF_RenderThreadSafe);
+
+// TyT
+// Console var to switch between the lens-flare methods
+TAutoConsoleVariable<int32> CVarLensFlareMethod(
+	TEXT("r.LensFlareMethod"),
+	1,
+	TEXT(" 0: Original lens-flare method\n")
+	TEXT(" 1: Custom lens-flare method"),
+	ECVF_RenderThreadSafe);
+// TyT
+```
+
+파일의 하단부에 `AddLensFlaresPass()` 함수에 파라미터를 추가해 주고, 함수를 수정해 준다.
+```cpp
+FScreenPassTexture AddLensFlaresPass(
+	FRDGBuilder& GraphBuilder,
+	const FViewInfo& View,
+	FScreenPassTexture Bloom,
+	FScreenPassTextureInput HalfSceneColor,		// TyT
+	const FSceneDownsampleChain& SceneDownsampleChain)
+{
+	[...]
+	
+	FLensFlareInputs LensFlareInputs;
+	LensFlareInputs.Bloom = Bloom;
+	LensFlareInputs.HalfSceneColor = HalfSceneColor;	// TyT
+	LensFlareInputs.Flare = SceneDownsampleChain.GetTexture(LensFlareDownsampleStageIndex);
+	
+	[...]
+
+	// If a bloom output texture isn't available, substitute the half resolution scene color instead, but disable bloom
+	// composition. The pass needs a primary input in order to access the image descriptor and viewport for output.
+	if (!Bloom.IsValid())
+	{
+		LensFlareInputs.Bloom = SceneDownsampleChain.GetFirstTexture();
+		LensFlareInputs.bCompositeWithBloom = false;
+	}
+	
+	// TyT
+	int32 UseCustomFlare = CVarLensFlareMethod.GetValueOnRenderThread();
+	
+	FLensFlareOutputsData Outputs;
+	Outputs.Texture = nullptr;
+	Outputs.Rect = FIntRect(0, 0, 0, 0);
+	
+	if (UseCustomFlare != 0)
+	{
+		PP_LensFlares.Broadcast(GraphBuilder, View, LensFlareInputs, Outputs);
+	}
+	
+	if (UseCustomFlare == 0 || Outputs.Texture == nullptr)
+	{
+		return AddLensFlaresPass(GraphBuilder, View, LensFlareInputs);
+	}
+	else
+	{
+		return FScreenPassTexture(Outputs.Texture, Outputs.Rect);
+	}
+	//return AddLensFlaresPass(GraphBuilder, View, LensFlareInputs);
+	// TyT
+```
+위 코드는 다음과 같은 일을 한다.
+- cvar value를 얻는다.(콘솔 변수)
+- 렌즈 플레어 패스 결과를 위한 구조체를 생성한다.
+- cvar이 0이 아니면, 델리게이트에 연결된 함수를 실행하도록 요청한다.
+- cvar이 0이거나 델리게이트에서 invalid한 값이 return되면, 기존 렌즈 플레어 패스를 실행한다.
+- 그 외에는 커스텀 렌즈 플레어 패스의 결과를 기반으로 특수한 텍스처를 반환한다.
+
+
+==디버그 목적으로 이전 버전과 커스텀 버전을 둘다 가능하게 만들었지만, 사용되지도 않는 셰이더 컴파일 등 최적화에 문제가 있으니 기존 버전을 제거하는 것이 도움이 될 수도 있음==
+
+# 5. Custom Subsystem
