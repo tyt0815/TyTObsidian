@@ -1,4 +1,5 @@
 [참조](https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/)
+![[프로젝트 환경]]
 - 기존 렌즈 플레어
 ![[Pasted image 20240404162820.png]]
 
@@ -348,3 +349,104 @@ FScreenPassTexture AddLensFlaresPass(
 서브시스템은 엔진 자체에서 관리되는 싱글톤으로, 게임 코드 어디서든 쉽게 검색이 가능함. 그중 엔진 서브시스템은 엔진이 시작되고 종료될 때 함께 시작되고 중지된다.
 
 플러그인에서 EngineSubsystem을 상속하는 새 클래스를 만든다.
+**PostProcessSubsystem.h**
+```cpp
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Subsystems/EngineSubsystem.h"
+#include "PostProcess/PostProcessLensFlares.h"
+#include "PostProcessSubsystem.generated.h"
+
+DECLARE_MULTICAST_DELEGATE_FourParams(FPP_LensFlares, FRDGBuilder&, const FViewInfo&, const FLensFlareInputs&, FLensFlareOutputsData&);
+extern RENDERER_API FPP_LensFlares PP_LensFlares;
+
+class UPostProcessLensFlareAsset;
+
+UCLASS()
+class CUSTOMPOSTPROCESS_API UPostProcessSubsystem : public UEngineSubsystem
+{
+	GENERATED_BODY()
+	
+public:
+    // Init function to setup the delegate and load the data asset
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+    // Used for cleanup
+    virtual void Deinitialize() override;
+
+private:
+    // The reference to the data asset storing the settings
+    UPROPERTY(Transient)
+    UPostProcessLensFlareAsset* PostProcessAsset;
+
+    // Called by engine delegate Render Thread
+    void RenderLensFlare(
+        FRDGBuilder& GraphBuilder,
+        const FViewInfo& View,
+        const FLensFlareInputs& Inputs,
+        FLensFlareOutputsData& Outputs
+    );
+
+    // Threshold prender pass
+    FRDGTextureRef RenderThreshold(
+        FRDGBuilder& GraphBuilder,
+        FRDGTextureRef InputTexture,
+        FIntRect& InputRect,
+        const FViewInfo& View
+    );
+
+    // Ghosts + Halo render pass
+    FRDGTextureRef RenderFlare(
+        FRDGBuilder& GraphBuilder,
+        FRDGTextureRef InputTexture,
+        FIntRect& InputRect,
+        const FViewInfo& View
+    );
+
+    // Glare render pass
+    FRDGTextureRef RenderGlare(
+        FRDGBuilder& GraphBuilder,
+        FRDGTextureRef InputTexture,
+        FIntRect& InputRect,
+        const FViewInfo& View
+    );
+
+    // Sub-pass for blurring
+    FRDGTextureRef RenderBlur(
+        FRDGBuilder& GraphBuilder,
+        FRDGTextureRef InputTexture,
+        const FViewInfo& View,
+        const FIntRect& Viewport,
+        int BlurSteps
+    );
+
+    // Cached blending and sampling states
+    // which are re-used across render passes
+    FRHIBlendState* ClearBlendState = nullptr;
+    FRHIBlendState* AdditiveBlendState = nullptr;
+
+    FRHISamplerState* BilinearClampSampler = nullptr;
+    FRHISamplerState* BilinearBorderSampler = nullptr;
+    FRHISamplerState* BilinearRepeatSampler = nullptr;
+    FRHISamplerState* NearestRepeatSampler = nullptr;
+};
+
+```
+- 엔진의 버전과 연결하기 위해 델리게이트를 다시 선언. 그 다음 줄에서 extern 정의를 통해 객체를 선언
+- `UPostProcessLensFlareAsset` 전방선언
+- `Initialize()`와 `Deinitialize()`은 서브시스템의 기본 함수. 몇가지 설정을 위해 오버라이딩 해준다.
+- `PostProcessAsset`은 콘텐츠 브라우저에서 가져올 렌더링 매개변수에 대한 참조.
+- `RenderLensFlare(), RenderThreshold(), RenderFlare(), RenderGlare() RenderBlur()`는 각각 다른 패스를 렌더링하는 데 사용할 다양한 렌더링 함수.
+- FRHIBlendState와 FRHISamplerState는 다양한 패스에서 사용될 여러 매개변수.
+
+**PostProcessSubsystem.cpp**
+```cpp
+
+```
+namespace는 기존 엔진쪽과 출동 없이 전역 셰이더를 선언하는 데 사용됨. 여기서의 TODO는 다음 단계에서 작성됨.
+ `Initialize()`는 두가지 큰 작업을 수행함.
+1. delegate 설정이 이루어 진다. 엔진에 의해 브로드캐스트가 트리거될때 내부 함수가 호출되도록 정의하는 곳이다. 이는 람다를 사용해 델리게이트 객체를 빌드하고, ENQUEUE_RENDER_COMMAND를 사용하여 모든 것ㅇ르 등록하는 곳이다.
+2. 다음으로 데이터 에셋을 로드한다. 이 함수가 생성자의 일부가 아니기 때문에 FObjectFinder 대신, LoadObject() 도우미를 사용하여 에셋을 로드한다. 여기서 경로를 자신의 경로로 대체해야 한다.
+==여기서 델리게이트를 설정하고 연결하는 방법이 ThreadSafe하지 않을 수 있다는 말이 있다. 작성자가 직적 이 문제와 관련된 크래시를 보진 않았지만, 그대로 제품에 사용하긴 적합하지 않을 수 있다는 점에 유의하자.
+이 문제에 대한 해결법으로 제안된 것은, 렌더링 코드를 서브 클래스로 이동하고 `CreateShared()`로 만든 ThreadSafe한 포인터(TSharedPtr)에 저장하는 것이다.==
