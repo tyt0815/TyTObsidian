@@ -533,3 +533,132 @@ inline void DrawShaderPass(
 - `DrawRectangle()`: 최종 함수. 직접 메시 데이터를 구축하지 않고도 버퍼에 쿼드를 그릴 수 있도록 도와주는 함수. 전달된 모든 정보는 쿼드를 어디에 그리고 어느 크기로 그려야 하는지를 정의하는 데만 사용. 쿼드의 크기는 UV크기와 독립적이며, 예를 들어 버퍼의 하위 영역을 그릴 때 유용하다. 이 경우 쿼드 크기와 UV가 다르지 않다.(항상 전체 버퍼를 업데이트 하기 때문)
 
 # 7. 메인 렌더링 함수
+먼저 몇가지 툴을 추가한다. 렌더링 프로세스 단계를 건너뛰는데 사용될 몇 가지 콘솔 변수를 추가한다. 그리고 `DECLARE_GPU_STAT`를 사용하여 새로운 GPU 통계 이벤트를 추가한다. 이를 통해 엔진의 라이브 GPU프로파일러를 통해 효과의 렌더링 시간을 볼 수 있다.
+```cpp
+TAutoConsoleVariable<int32> CVarLensFlareRenderBloom(
+    TEXT("r.LensFlare.RenderBloom"),
+    1,
+    TEXT(" 0: Don't mix Bloom into lens-flare\n")
+    TEXT(" 1: Mix the Bloom into the lens-flare"),
+    ECVF_RenderThreadSafe);
+
+TAutoConsoleVariable<int32> CVarLensFlareRenderFlarePass(
+    TEXT("r.LensFlare.RenderFlare"),
+    1,
+    TEXT(" 0: Don't render flare pass\n")
+    TEXT(" 1: Render flare pass (ghosts and halos)"),
+    ECVF_RenderThreadSafe);
+
+TAutoConsoleVariable<int32> CVarLensFlareRenderGlarePass(
+    TEXT("r.LensFlare.RenderGlare"),
+    1,
+    TEXT(" 0: Don't render glare pass\n")
+    TEXT(" 1: Render flare pass (star shape)"),
+    ECVF_RenderThreadSafe);
+
+DECLARE_GPU_STAT(LensFlaresTyT)
+```
+
+이제 렌더링 함수로 넘어간다.
+```cpp
+void UPostProcessSubsystem::RenderLensFlare(
+    FRDGBuilder& GraphBuilder,
+    const FViewInfo& View,
+    const FLensFlareInputs& Inputs,
+    FLensFlareOutputsData& Outputs
+)
+{
+    check(Inputs.Bloom.IsValid());
+    check(Inputs.HalfSceneColor.IsValid());
+
+    if (PostProcessAsset == nullptr)
+    {
+        return;
+    }
+
+    RDG_GPU_STAT_SCOPE(GraphBuilder, LensFlaresTyT)
+    RDG_EVENT_SCOPE(GraphBuilder, "LensFlaresTyT");
+	[...]
+}
+```
+`check`는 invaild data에 대해서는 렌더링 패스를 실행하지 않기 위해서다. 데이터 에셋 또한 vaild한지 체크해 준다.
+그리고 GPU state event를 등록해 준다. 이 부분은 `RenderLensFlare()`가 실질적으로 렌더링 쓰레드에서 실행되기 때문에 이곳에 작성해 준다.
+
+다음은 몇몇 변수를 설정하는데, 이 부분은 실제로 다른 렌더링 함수에서 사용되는 것을 재사용 하는 것 이다.
+```cpp
+	[...]
+	const FScreenPassTextureViewport BloomViewport(Inputs.Bloom);
+    const FVector2D BloomInputViewportSize = GetInputViewportSize( BloomViewport.Rect, BloomViewport.Extent );
+
+    const FScreenPassTextureViewport SceneColorViewport(Inputs.HalfSceneColor);
+    const FVector2D SceneColorViewportSize = GetInputViewportSize( SceneColorViewport.Rect, SceneColorViewport.Extent );
+
+    // Input
+    FRDGTextureRef InputTexture = Inputs.HalfSceneColor.Texture;
+    FIntRect InputRect = SceneColorViewport.Rect;
+
+    // Outputs
+    FRDGTextureRef OutputTexture = Inputs.HalfSceneColor.Texture;
+    FIntRect OutputRect = SceneColorViewport.Rect;
+
+    // States
+    if( ClearBlendState == nullptr )
+    {
+        // Blend modes from:
+        // '/Engine/Source/Runtime/RenderCore/Private/ClearQuad.cpp'
+        // '/Engine/Source/Runtime/Renderer/Private/PostProcess/PostProcessMaterial.cpp'
+        ClearBlendState = TStaticBlendState<>::GetRHI();
+        AdditiveBlendState = TStaticBlendState<CW_RGB, BO_Add, BF_One, BF_One>::GetRHI();
+
+        BilinearClampSampler = TStaticSamplerState<SF_Bilinear, AM_Clamp, AM_Clamp, AM_Clamp>::GetRHI();
+        BilinearBorderSampler = TStaticSamplerState<SF_Bilinear, AM_Border, AM_Border, AM_Border>::GetRHI();
+        BilinearRepeatSampler = TStaticSamplerState<SF_Bilinear, AM_Wrap, AM_Wrap, AM_Wrap>::GetRHI();
+        NearestRepeatSampler = TStaticSamplerState<SF_Point, AM_Wrap, AM_Wrap, AM_Wrap>::GetRHI();
+    }
+
+    // TODO_RESCALE
+
+    ////////////////////////////////////////////////////////////////////////
+    // Render passes
+    ////////////////////////////////////////////////////////////////////////
+    FRDGTextureRef ThresholdTexture = nullptr;
+    FRDGTextureRef FlareTexture = nullptr;
+    FRDGTextureRef GlareTexture = nullptr;
+
+    ThresholdTexture = RenderThreshold(
+        GraphBuilder,
+        InputTexture,
+        InputRect,
+        View
+    );
+
+    if( CVarLensFlareRenderFlarePass.GetValueOnRenderThread() )
+    {
+        FlareTexture = RenderFlare(
+            GraphBuilder,
+            ThresholdTexture,
+            InputRect,
+            View
+        );
+    }
+
+    if( CVarLensFlareRenderGlarePass.GetValueOnRenderThread() )
+    {
+        GlareTexture = RenderGlare(
+            GraphBuilder,
+            ThresholdTexture,
+            InputRect,
+            View
+        );
+    }
+
+    // TODO_MIX
+
+    ////////////////////////////////////////////////////////////////////////
+    // Final Output
+    ////////////////////////////////////////////////////////////////////////
+    Outputs.Texture = OutputTexture;
+    Outputs.Rect    = OutputRect;
+
+} // End RenderLensFlare()
+```
