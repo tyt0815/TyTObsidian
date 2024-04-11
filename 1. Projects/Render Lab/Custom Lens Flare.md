@@ -662,3 +662,38 @@ void UPostProcessSubsystem::RenderLensFlare(
 
 } // End RenderLensFlare()
 ```
+`FScreenPassTextureViewport`와 `FVector2D`는 입력 버퍼 속성을 계산하는 데 사용된다. 이를 `FRDGTextureRef OutputTexture`가 따라서 `Outputs`구조체에 저장되고 엔진으로 다시 전달되는 출력 텍스처다. `FRDGTextureRef`는 단순히 RDG 텍스처에 대한 포인터다.
+
+다음은 다양한 States를 초기화 한다. 이들은 렌더 스레드를 통해서만 사용 가능한 RHI에 액세스 해야 하기 때문에 여기에서 초기화 된다.
+
+나머지는 작성된 대로 렌더링 된다.
+___
+
+남은 렌더함수는 잠시 두고, 다음 단계로 넘어간다.
+```cpp
+FRDGTextureRef UPostProcessSubsystem::RenderThreshold(FRDGBuilder& GraphBuilder, FRDGTextureRef InputTexture, FIntRect& InputRect, const FViewInfo& View)
+{
+    // TODO
+    return FRDGTextureRef();
+}
+
+FRDGTextureRef UPostProcessSubsystem::RenderFlare(FRDGBuilder& GraphBuilder, FRDGTextureRef InputTexture, FIntRect& InputRect, const FViewInfo& View)
+{
+    // TODO
+    return FRDGTextureRef();
+}
+
+FRDGTextureRef UPostProcessSubsystem::RenderGlare(FRDGBuilder& GraphBuilder, FRDGTextureRef InputTexture, FIntRect& InputRect, const FViewInfo& View)
+{
+    // TODO
+    return FRDGTextureRef();
+}
+
+FRDGTextureRef UPostProcessSubsystem::RenderBlur(FRDGBuilder& GraphBuilder, FRDGTextureRef InputTexture, const FViewInfo& View, const FIntRect& Viewport, int BlurSteps)
+{
+    // TODO
+    return FRDGTextureRef();
+}
+```
+
+# 8. Common Shader
