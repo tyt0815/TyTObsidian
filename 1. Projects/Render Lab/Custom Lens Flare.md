@@ -450,3 +450,78 @@ namespace는 기존 엔진쪽과 출동 없이 전역 셰이더를 선언하는 
 2. 다음으로 데이터 에셋을 로드한다. 이 함수가 생성자의 일부가 아니기 때문에 FObjectFinder 대신, LoadObject() 도우미를 사용하여 에셋을 로드한다. 여기서 경로를 자신의 경로로 대체해야 한다.
 ==여기서 델리게이트를 설정하고 연결하는 방법이 ThreadSafe하지 않을 수 있다는 말이 있다. 작성자가 직적 이 문제와 관련된 크래시를 보진 않았지만, 그대로 제품에 사용하긴 적합하지 않을 수 있다는 점에 유의하자.
 이 문제에 대한 해결법으로 제안된 것은, 렌더링 코드를 서브 클래스로 이동하고 `CreateShared()`로 만든 ThreadSafe한 포인터(TSharedPtr)에 저장하는 것이다.==
+
+# 6. Utility Functions
+유틸리티 함수들은 PostProcessSubsystem.cpp에 그대로 작성되었다.(헤더x)
+
+이 함수는 서브 영역 크기를 계산하고 버퍼를 다시 크기 조정하는 비율을 출력한다. 이것은 threshold패스중에 유용하다. 대부분의 코드는 엔진 자체에서 복사하여 붙여넣은 것.
+```cpp
+FVector2D GetInputViewportSize( const FIntRect& Input, const FIntPoint& Extent )
+{
+    // Based on
+    // GetScreenPassTextureViewportParameters()
+    // Engine/Source/Runtime/Renderer/Private/ScreenPass.cpp
+
+    FVector2D ExtentInverse = FVector2D(1.0f / Extent.X, 1.0f / Extent.Y);
+
+    FVector2D RectMin = FVector2D(Input.Min);
+    FVector2D RectMax = FVector2D(Input.Max);
+
+    FVector2D Min = RectMin * ExtentInverse;
+    FVector2D Max = RectMax * ExtentInverse;
+
+    return (Max - Min);
+}
+```
+
+다음은 가장 중요한 함수인데, 실제로 렌더 그래프에 등록될 draw다.
+```cpp
+// The function that draw a shader into a given RenderGraph texture
+template<typename TShaderParameters, typename TShaderClassVertex, typename TShaderClassPixel>
+inline void DrawShaderPass(
+        FRDGBuilder& GraphBuilder,
+        const FString& PassName,
+        TShaderParameters* PassParameters,
+        TShaderMapRef<TShaderClassVertex> VertexShader,
+        TShaderMapRef<TShaderClassPixel> PixelShader,
+        FRHIBlendState* BlendState,
+        const FIntRect& Viewport
+    )
+{
+    const FScreenPassPipelineState PipelineState(VertexShader, PixelShader, BlendState);
+
+    GraphBuilder.AddPass(
+        FRDGEventName( TEXT("%s"), *PassName ),
+        PassParameters,
+        ERDGPassFlags::Raster,
+        [PixelShader, PassParameters, Viewport, PipelineState] (FRHICommandListImmediate& RHICmdList)
+    {
+        RHICmdList.SetViewport(
+            Viewport.Min.X, Viewport.Min.Y, 0.0f,
+            Viewport.Max.X, Viewport.Max.Y, 1.0f
+        );
+
+        SetScreenPassPipelineState(RHICmdList, PipelineState);
+
+        SetShaderParameters(
+            RHICmdList,
+            PixelShader,
+            PixelShader.GetPixelShader(),
+            *PassParameters
+        );
+
+        DrawRectangle(
+            RHICmdList,                             // FRHICommandList
+            0.0f, 0.0f,                             // float X, float Y
+            Viewport.Width(),   Viewport.Height(),  // float SizeX, float SizeY
+            Viewport.Min.X,     Viewport.Min.Y,     // float U, float V
+            Viewport.Width(),                       // float SizeU
+            Viewport.Height(),                      // float SizeV
+            Viewport.Size(),                        // FIntPoint TargetSize
+            Viewport.Size(),                        // FIntPoint TextureSize
+            PipelineState.VertexShader,             // const TShaderRefBase VertexShader
+            EDrawRectangleFlags::EDRF_Default       // EDrawRectangleFlags Flags
+        );
+    });
+}
+```
