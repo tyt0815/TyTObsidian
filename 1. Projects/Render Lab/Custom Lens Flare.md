@@ -671,29 +671,115 @@ ___
 
 남은 렌더함수는 잠시 두고, 다음 단계로 넘어간다.
 ```cpp
-FRDGTextureRef UPostProcessSubsystem::RenderThreshold(FRDGBuilder& GraphBuilder, FRDGTextureRef InputTexture, FIntRect& InputRect, const FViewInfo& View)
+FRDGTextureRef UPostProcessSubsystem::RenderThreshold(
+    FRDGBuilder& GraphBuilder,
+    FRDGTextureRef InputTexture,
+    FIntRect& InputRect,
+    const FViewInfo& View
+)
 {
-    // TODO
+    // TODO_THRESHOLD
+
+    // TODO_THRESHOLD_BLUR
+
     return FRDGTextureRef();
 }
 
-FRDGTextureRef UPostProcessSubsystem::RenderFlare(FRDGBuilder& GraphBuilder, FRDGTextureRef InputTexture, FIntRect& InputRect, const FViewInfo& View)
+FRDGTextureRef UPostProcessSubsystem::RenderFlare(
+    FRDGBuilder& GraphBuilder,
+    FRDGTextureRef InputTexture,
+    FIntRect& InputRect,
+    const FViewInfo& View
+)
 {
-    // TODO
+    // TODO_FLARE_CHROMA
+    
+    // TODO_FLARE_GHOST
+    
+    // TODO_FLARE_HALO
     return FRDGTextureRef();
 }
 
-FRDGTextureRef UPostProcessSubsystem::RenderGlare(FRDGBuilder& GraphBuilder, FRDGTextureRef InputTexture, FIntRect& InputRect, const FViewInfo& View)
+FRDGTextureRef UPostProcessSubsystem::RenderGlare(
+    FRDGBuilder& GraphBuilder,
+    FRDGTextureRef InputTexture,
+    FIntRect& InputRect,
+    const FViewInfo& View
+)
 {
-    // TODO
+    // TODO_GLARE
     return FRDGTextureRef();
 }
 
-FRDGTextureRef UPostProcessSubsystem::RenderBlur(FRDGBuilder& GraphBuilder, FRDGTextureRef InputTexture, const FViewInfo& View, const FIntRect& Viewport, int BlurSteps)
+FRDGTextureRef UPostProcessSubsystem::RenderBlur(
+    FRDGBuilder& GraphBuilder,
+    FRDGTextureRef InputTexture,
+    const FViewInfo& View,
+    const FIntRect& Viewport,
+    int BlurSteps
+)
 {
-    // TODO
+    // TODO_BLUR
     return FRDGTextureRef();
 }
 ```
 
 # 8. Common Shader
+==이전 단계에서 남겨둔 TODO를 하나씩 해결한다==
+
+이제 common shader를 설정해야 한다. 버퍼에 렌더링 하기 위해 최소 버텍스, 픽셀 셰이더가 필요하다. 픽셀 셰이더는 다른 패스와는 좀 다르겠지만, 버텍스 셰이더는 대부분의 패스에 대해 거의 동일하다. 왜냐하면 단순히 사각형을 렌더링 하기 때문이다.
+
+**TODO_SHADER_SCREENPASS**
+```cpp
+// RDG buffer input shared by all passes
+BEGIN_SHADER_PARAMETER_STRUCT(FCustomLensFlarePassParameters, )
+    SHADER_PARAMETER_RDG_TEXTURE(Texture2D, InputTexture)
+    RENDER_TARGET_BINDING_SLOTS()
+END_SHADER_PARAMETER_STRUCT()
+
+// The vertex shader to draw a rectangle.
+class FCustomScreenPassVS : public FGlobalShader
+{
+public:
+    DECLARE_GLOBAL_SHADER(FCustomScreenPassVS);
+
+    static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters&)
+    {
+        return true;
+    }
+
+    FCustomScreenPassVS() = default;
+    FCustomScreenPassVS(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
+        : FGlobalShader(Initializer)
+    {}
+};
+IMPLEMENT_GLOBAL_SHADER(FCustomScreenPassVS, "/CustomShaders/ScreenPass.usf", "CustomScreenPassVS", SF_Vertex);     // CustomPostProcess.cpp에서 매핑한 경로가 /CustomShaders이므로 잘 확인하고 작성할 것
+```
+`BEGIN_SHADER_PARAMETER_STRUCT`매크로로 셰이더 파라미터를 정의한다. `END_SHADER_PARAMETER_STRUCT`가 나올때까지 연관된 속성 목록이다.
+`SHADER_PARAMETER_RDG_TEXTURE`는 RDG버퍼를 위한 입력 텍스처다. 렌더 타겟이나 다른 텍스처2D는 다른 매크로를 사용한다. `RENDER_TARGET_BINDING_SLOTS`은 버퍼가 셰이더에 첨부될 수 있도록 보조 매개변수를 추가한다. 자세한 정보는
+- Engine/Source/Runtime/RenderCore/Public/ShaderParameterMacros.h
+에서 매크로 정의를 찾을 수 있다.
+
+글로벌 셰이더는 기본적으로 FGlobalShader에서 상속된 C++클래스다. 그런 다음 셰이더 프로그램을 컴파일 하는 데 사용할 실제 HLSL 파일을 지정하기 위해 `MPLEMENT_GLOBAL_SHADER`매크로를 사용한다. 이 매크로는 네가지 인수를 갖는다.
+- C++ 클래스: 바로 위에서 생성한 클래스
+- 심볼릭 경로: 모듈에서 정의한 심볼릭 경로에 따른 usf파일의 위치
+- 함수 이름: 로드하려는 셰이더 파일의 함수 이름.
+- 셰이더 유형: 다른 언어와 마찬가지로 Vertex 셰이더, Pixel 셰이더 등을 로드하는지를 지정. enum타입이다.
+___
+셰이더 파일을 작성한다.
+
+ScreenPass.usf
+```hlsl
+#include "Shared.ush"
+
+void CustomScreenPassVS(
+    in float4 InPosition : ATTRIBUTE0,
+    in float2 InTexCoord : ATTRIBUTE1,
+    out noperspective float4 OutUVAndScreenPos : TEXCOORD0,
+    out float4 OutPosition : SV_POSITION)
+{
+    DrawRectangle(InPosition, InTexCoord, OutPosition, OutUVAndScreenPos);
+}
+```
+
+# 9. Rescale Pass
