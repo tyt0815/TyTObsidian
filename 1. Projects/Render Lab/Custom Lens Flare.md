@@ -442,7 +442,70 @@ private:
 
 **PostProcessSubsystem.cpp**
 ```cpp
+#include "PostProcessSubsystem.h"
+#include "PostProcessLensFlareAsset.h"
 
+#include "RenderGraph.h"
+#include "ScreenPass.h"
+#include "PostProcess/PostProcessLensFlares.h"
+
+namespace
+{
+    // TODO_SHADER_SCREENPASS
+
+    // TODO_SHADER_RESCALE
+
+    // TODO_SHADER_DOWNSAMPLE
+
+    // TODO_SHADER_KAWASE
+
+    // TODO_SHADER_CHROMA
+
+    // TODO_SHADER_GHOSTS
+
+    // TODO_SHADER_HALO
+
+    // TODO_SHADER_GLARE
+
+    // TODO_SHADER_MIX
+}
+
+void UPostProcessSubsystem::Initialize( FSubsystemCollectionBase& Collection )
+{
+    Super::Initialize( Collection );
+
+    //--------------------------------
+    // Delegate setup
+    //--------------------------------
+    FPP_LensFlares::FDelegate Delegate = FPP_LensFlares::FDelegate::CreateLambda(
+        [=]( FRDGBuilder& GraphBuilder, const FViewInfo& View, const FLensFlareInputs& Inputs, FLensFlareOutputsData& Outputs )
+    {
+        RenderLensFlare(GraphBuilder, View, Inputs, Outputs);
+    });
+
+    ENQUEUE_RENDER_COMMAND(BindRenderThreadDelegates)([Delegate](FRHICommandListImmediate& RHICmdList)
+    {
+        PP_LensFlares.Add(Delegate);
+    });
+
+    //--------------------------------
+    // Data asset loading
+    //--------------------------------
+    FString Path = "PostProcessLensFlareAsset'/CustomPostProcess/DefaultLensFlare.DefaultLensFlare'";
+
+    PostProcessAsset = LoadObject<UPostProcessLensFlareAsset>( nullptr, *Path );
+    check(PostProcessAsset);
+}
+
+void UPostProcessSubsystem::Deinitialize()
+{
+    ClearBlendState = nullptr;
+    AdditiveBlendState = nullptr;
+    BilinearClampSampler = nullptr;
+    BilinearBorderSampler = nullptr;
+    BilinearRepeatSampler = nullptr;
+    NearestRepeatSampler = nullptr;
+}
 ```
 namespace는 기존 엔진쪽과 출동 없이 전역 셰이더를 선언하는 데 사용됨. 여기서의 TODO는 다음 단계에서 작성됨.
  `Initialize()`는 두가지 큰 작업을 수행함.
