@@ -3,6 +3,9 @@
 - 기존 렌즈 플레어
 ![[Pasted image 20240404162820.png]]
 
+
+# Overview of the Custom Lens Flare Pass
+![[Pasted image 20240415191738.png]]
 # 1. Setting Up a Plugin
 새 플러그인을 만들어 준다. 다른 설정은 마음대로 해되, Is Engine Plugin은 체크해제 하도록 하자.
 ![[Pasted image 20240409122416.png]]
@@ -959,3 +962,21 @@ ___
 마지막으로 새로생성된 버퍼를 **InputTexture**에 변수에 할당하여 다음 패스에서 사용할 수 있도록 한다.
 ___
 # 10. Downsample and Threshold Pass
+다운 샘플링과 약간의 블러 패스는 에일리어싱을 해결해 준다.
+![[Pasted image 20240415192100.png]]
+(**No custom filtering** vs **Downsampling** vs **Downsampling+Blur**, gif로 보면 확실히 티가난다.)
+
+모든 후속 효과는 임계값 패스를 기반으로 구축된다. 따라서 이 임계값 패스를 잘 구축하는 것이 중요하다.
+___
+임계값 결과를 블러 처리하는 것은 좋은 효과를 볼 수 없다.
+이전 **Activision**의 **Call of Duty: Advanced Warfare**에서 비슷한 문제를 겪은 블룸 생성에 대한 발표가 있었다.
+
+그들은 블룸을 원래 입력 버퍼를 여러 번 축소하여 생성한다. 어느 순간 픽셀정보가 맞거나 틀린다. 그래서 카메라를 움직일 때 엘리어싱 문제로 깜박임이 발생한다. 그들의 해결책은 이동 중에도 최종 값을 안정화하기 위해 이웃 픽셀을 특정 가중치로 평균화하는 것이었다.
+![[Pasted image 20240415191326.png]]
+___
+이제 위 방식을 기반으로 하는 다운샘플 패스를 만들어 보자
+
+**TODO_SHADER_DOWNSAMPLE**
+```cpp
+
+```
