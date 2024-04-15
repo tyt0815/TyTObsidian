@@ -790,5 +790,25 @@ void CustomScreenPassVS(
 
 **TODO_SHADER_RESCALE**
 ```CPP
+#if WITH_EDITOR
+    // Rescale shader
+    class FLensFlareRescalePS : public FGlobalShader
+    {
+    public:
+        DECLARE_GLOBAL_SHADER(FLensFlareRescalePS);
+        SHADER_USE_PARAMETER_STRUCT(FLensFlareRescalePS, FGlobalShader);
 
+        BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+            SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
+            SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
+            SHADER_PARAMETER(FVector2D, InputViewportSize)
+        END_SHADER_PARAMETER_STRUCT()
+
+            static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+        {
+            return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+        }
+    };
+    IMPLEMENT_GLOBAL_SHADER(FLensFlareRescalePS, "/CustomShaders/Rescale.usf", "RescalePS", SF_Pixel);
+#endif
 ```
