@@ -812,3 +812,32 @@ void CustomScreenPassVS(
     IMPLEMENT_GLOBAL_SHADER(FLensFlareRescalePS, "/CustomShaders/Rescale.usf", "RescalePS", SF_Pixel);
 #endif
 ```
+`#if WITH_EDITOR`는 프로젝트가 출시될때 컴파일시 제거되는 것을 의미한다.
+
+이전 단계에서 보여준 것 처럼, `FGlobalShader`를 상속하는 새 클래스를 선언하여 시작한다.
+- `SHADER_PARAMETER_STRUCT_INCLUDE`: 처음에 만들었던 셰이더 구조체(`FCustomLensFlarePassParameters`)를 참조한다. 여기서는 버퍼 텍스처 입력을 추가하기 위해 사용.
+- `SHADER_PARAMETER_SAMPLER`: 새 샘플러 파라미터를 선언.
+- `SHADER_PARAMETER`: 주어진 유형의 매개변수를 선언하고 그 이름을 지정. HLSL에서 float2로 사용될 FVector2D를 사용.
+- `IMPLEMENT_GLOBAL_SHADER`: 이번에는 픽셀 셰이더 이므로 ,`SF_Pixel`을 사용함을 알 수 있음.
+___
+**Rescale.usf**
+```hlsl
+#include "Shared.ush"
+
+void RescalePS(
+    in noperspective float4 UVAndScreenPos : TEXCOORD0,
+    out float4 OutColor : SV_Target0 )
+{
+    float2 UV = UVAndScreenPos.xy * InputViewportSize;
+    OutColor.rgb = Texture2DSample( InputTexture, InputSampler, UV ).rgb;
+    OutColor.a = 0;
+}
+```
+`InputViewportSize`의 도움으로 영역 크기를 기반으로 UV를 재조정하여 버퍼를 채운다.
+___
+이제 셰이더를 사용하는 코드를 추가해 보자.
+
+**TODO_RESCALE**
+```
+
+```
