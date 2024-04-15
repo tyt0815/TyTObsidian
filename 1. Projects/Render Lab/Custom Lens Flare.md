@@ -839,5 +839,60 @@ ___
 
 **TODO_RESCALE**
 ```
+#if WITH_EDITOR
+    if( SceneColorViewport.Rect.Width()  != SceneColorViewport.Extent.X
+    ||  SceneColorViewport.Rect.Height() != SceneColorViewport.Extent.Y )
+    {
+        const FString PassName("LensFlareRescale");
 
+        // Build target buffer
+        FRDGTextureDesc Desc = Inputs.HalfSceneColor.Texture->Desc;
+        Desc.Reset();
+        Desc.Extent     = SceneColorViewport.Rect.Size();
+        Desc.Format     = PF_FloatRGB;
+        Desc.ClearValue = FClearValueBinding(FLinearColor::Transparent);
+        FRDGTextureRef RescaleTexture = GraphBuilder.CreateTexture(Desc, *PassName);
+
+        // Setup shaders
+        TShaderMapRef<FCustomScreenPassVS> VertexShader(View.ShaderMap);
+        TShaderMapRef<FLensFlareRescalePS> PixelShader(View.ShaderMap);
+
+        // Setup shader parameters
+        FLensFlareRescalePS::FParameters* PassParameters = GraphBuilder.AllocParameters<FLensFlareRescalePS::FParameters>();
+        PassParameters->Pass.InputTexture       = Inputs.HalfSceneColor.Texture;
+        PassParameters->Pass.RenderTargets[0]   = FRenderTargetBinding(RescaleTexture, ERenderTargetLoadAction::ENoAction);
+        PassParameters->InputSampler            = BilinearClampSampler;
+        PassParameters->InputViewportSize       = SceneColorViewportSize;
+
+        // Render shader into buffer
+        DrawShaderPass(
+            GraphBuilder,
+            PassName,
+            PassParameters,
+            VertexShader,
+            PixelShader,
+            ClearBlendState,
+            SceneColorViewport.Rect
+        );
+
+        // Assign result before end of scope
+        InputTexture = RescaleTexture;
+    }
+#endif
 ```
+영역 크기(Rect)와 버퍼 크기(Extent)가 일치하지 않으면 크기를 다시 조정한다.
+
+실제 렌더링 코드에는 세가지 주요 블록이 있다.
+- **Texture Creation**: 우리는 실제로 텍스처/버퍼를 빌드하지 않고, RDG가 하도록 지시한다. RDG가 컴파일할 때, 새로운 버퍼를 생성하거나 재사용한다. **GraphBuilder**는 명령을 등록할 수 있는 RDG의 인스턴스이고, **GraphBuilder.CreateTexture()** 는 텍스처를 빌드 하게 해주는 함수다. 우리는 버퍼가 가질 속성의 Description을 설명해 주면 된다.
+  기존 버퍼의 Description을 재사용해 몇가지 설정을 재조정하는 것으로 성능을 향상시키는 것이 가능하다. 그것이 **HalfSceneColor**를 사용해 하는 코드다. 이것은 올바른 렌더링 플래그가 설정된 Description을 가지고 있기 때문에 수정할 필요가 없다.
+- **Shader parameters**: 다음은 버텍스와 픽셀 셰이더 인스턴스를 생성한다. 이것은 **TShaderMapRef**를 채우는 셰이더 클래스를 사용해서 이루어 진다.
+  그리고 실제 파라미터는 **GraphBuilder**를 사용해서 우리가 원하는 값을 할당할 수 있다.
+- **Draw**: 마지막으로 **DrawShaderPass()** 를 호출하여 **GraphBuilder**에 렌더링을 요청한다. 이 함수가 어떻게 작동하는지는 **Utility fuction step**에서 다시 확인해 볼 수 있다.
+
+==`FRenderTargetBinding`==및 매개변수 할당에 대해 좀더 자세히 설명하자면 셰이더에서 보았듯이, 우리는 버퍼 입력 자체가 참조되는 매개변수 구조체를 참조한다. 이것은 또한 결과를 버퍼를 정의하고 어디에 그릴지를 정의하는 곳이다. 이것이 `PassParameters->Pass.`를  사용해 구조체 파라미터에 접근하는 이유다.
+**InputTexture**는 우리가 읽기를 원하는 텍스처이고, **RenderTargets\[0\]** 버퍼는 우리가 쓰기를 원하는 버퍼다. **FRenderTargetBinding**은 어떤 버퍼에 쓰기를 할 것인지와 그 방법을 지정하는 특수한 객체로, **ERenderTargetLoadAction**을 사용하여 버퍼를 덮어쓸지 아니면 누적할지(additive blending)를 지정할 수 있다.
+대부분의 경우에서 작성자는 **ENoAction**을 사용하는데, 우리는 RGB값만 렌더링하고 셰이더는 누적을 필요가 없기 때문이다. 그래서 Clear나 Load할 필요가 없다.
+
+마지막으로 새로생성된 버퍼를 **InputTexture**에 변수에 할당하여 다음 패스에서 사용할 수 있도록 한다.
+___
+# 10. Downsample and Threshold Pass
