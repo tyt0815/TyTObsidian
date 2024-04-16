@@ -451,6 +451,8 @@ private:
 #include "RenderGraph.h"
 #include "ScreenPass.h"
 #include "PostProcess/PostProcessLensFlares.h"
+#include "DataDrivenShaderPlatformInfo.h"
+#include "SceneRendering.h"
 
 namespace
 {
@@ -481,7 +483,7 @@ void UPostProcessSubsystem::Initialize( FSubsystemCollectionBase& Collection )
     // Delegate setup
     //--------------------------------
     FPP_LensFlares::FDelegate Delegate = FPP_LensFlares::FDelegate::CreateLambda(
-        [=]( FRDGBuilder& GraphBuilder, const FViewInfo& View, const FLensFlareInputs& Inputs, FLensFlareOutputsData& Outputs )
+        [this]( FRDGBuilder& GraphBuilder, const FViewInfo& View, const FLensFlareInputs& Inputs, FLensFlareOutputsData& Outputs )
     {
         RenderLensFlare(GraphBuilder, View, Inputs, Outputs);
     });
@@ -598,6 +600,27 @@ inline void DrawShaderPass(
 - `SetShaderParameters()`: 셰이더 매개변수는 미리 정의된 다음 이 함수를 통해 전달됨.
 - `DrawRectangle()`: 최종 함수. 직접 메시 데이터를 구축하지 않고도 버퍼에 쿼드를 그릴 수 있도록 도와주는 함수. 전달된 모든 정보는 쿼드를 어디에 그리고 어느 크기로 그려야 하는지를 정의하는 데만 사용. 쿼드의 크기는 UV크기와 독립적이며, 예를 들어 버퍼의 하위 영역을 그릴 때 유용하다. 이 경우 쿼드 크기와 UV가 다르지 않다.(항상 전체 버퍼를 업데이트 하기 때문)
 
+### DrawRectangle()
+이 함수는 **SceneFilterRendering.cpp**.에 정의되어 있고, **SceneFilterRendering.h**에 아래와 같이 
+위 코드에서 해당 함수를 사용하기 위해서, 헤더파일또는 소스코드에서 이 함수가 존재함을 알려주자.
+```cpp
+extern RENDERER_API void DrawRectangle(
+    FRHICommandList& RHICmdList,
+    float X,
+    float Y,
+    float SizeX,
+    float SizeY,
+    float U,
+    float V,
+    float SizeU,
+    float SizeV,
+    FIntPoint TargetSize,
+    FIntPoint TextureSize,
+    const TShaderRef<FShader>& VertexShader,
+    EDrawRectangleFlags Flags = EDRF_Default,
+    uint32 InstanceCount = 1
+);
+```
 # 7. 메인 렌더링 함수
 먼저 몇가지 툴을 추가한다. 렌더링 프로세스 단계를 건너뛰는데 사용될 몇 가지 콘솔 변수를 추가한다. 그리고 `DECLARE_GPU_STAT`를 사용하여 새로운 GPU 통계 이벤트를 추가한다. 이를 통해 엔진의 라이브 GPU프로파일러를 통해 효과의 렌더링 시간을 볼 수 있다.
 ```cpp
@@ -867,7 +890,7 @@ void CustomScreenPassVS(
         BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
             SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
             SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
-            SHADER_PARAMETER(FVector2D, InputViewportSize)
+            SHADER_PARAMETER(FVector2f, InputViewportSize)
         END_SHADER_PARAMETER_STRUCT()
 
             static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
@@ -928,7 +951,7 @@ ___
         PassParameters->Pass.InputTexture       = Inputs.HalfSceneColor.Texture;
         PassParameters->Pass.RenderTargets[0]   = FRenderTargetBinding(RescaleTexture, ERenderTargetLoadAction::ENoAction);
         PassParameters->InputSampler            = BilinearClampSampler;
-        PassParameters->InputViewportSize       = SceneColorViewportSize;
+        PassParameters->InputViewportSize = FVector2f(SceneColorViewportSize);
 
         // Render shader into buffer
         DrawShaderPass(
@@ -978,5 +1001,25 @@ ___
 
 **TODO_SHADER_DOWNSAMPLE**
 ```cpp
+// Downsample shader
+class FDownsamplePS : public FGlobalShader
+{
+public:
+    DECLARE_GLOBAL_SHADER(FDownsamplePS);
+    SHADER_USE_PARAMETER_STRUCT(FDownsamplePS, FGlobalShader);
 
+    BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+        SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
+        SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
+        SHADER_PARAMETER(FVector2f, InputSize)
+        SHADER_PARAMETER(float, ThresholdLevel)
+        SHADER_PARAMETER(float, ThresholdRange)
+    END_SHADER_PARAMETER_STRUCT()
+
+        static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+    {
+        return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+    }
+};
+IMPLEMENT_GLOBAL_SHADER(FDownsamplePS, "/CustomShaders/DownsampleThreshold.usf", "DownsampleThresholdPS", SF_Pixel);
 ```
