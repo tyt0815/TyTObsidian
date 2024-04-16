@@ -1089,3 +1089,94 @@ void DownsampleThresholdPS(
 }
 ```
 코드에서 볼 수 있듯이, 먼저 13개의 샘플을 구한뒤 fade in/out의 레벨과 범위를 지정하여 작동하는 임계값(Threshold)을 만든다. 임계값은 Dot product를 통해 계산된 픽셀 밝기를 기반으로 적용된다.
+
+**TODO_THRESHOLD**
+```CPP
+	 RDG_EVENT_SCOPE(GraphBuilder, "ThresholdPass");
+
+    FRDGTextureRef OutputTexture = nullptr;
+
+    FIntRect Viewport = View.ViewRect;
+    FIntRect Viewport2 = FIntRect( 0, 0,
+        View.ViewRect.Width() / 2,
+        View.ViewRect.Height() / 2
+    );
+    FIntRect Viewport4 = FIntRect( 0, 0,
+        View.ViewRect.Width() / 4,
+        View.ViewRect.Height() / 4
+    );
+```
+이 코드는 `RenderThreshold()`함수에 있기 때문에 프로파일링을 위한 dedicated event를 추가할 수 있다. 그리고 `OutputTexture`를 준비하고, `FIntRect`를 통해 빌드하고 렌더링할 버퍼의 사이즈를 준비한다.
+___
+```cpp
+{
+    const FString PassName("LensFlareDownsample");
+
+    // Build texture
+    FRDGTextureDesc Description = InputTexture->Desc;
+    Description.Reset();
+    Description.Extent = Viewport4.Size();
+    Description.Format = PF_FloatRGB;
+    Description.ClearValue = FClearValueBinding(FLinearColor::Black);
+    FRDGTextureRef Texture = GraphBuilder.CreateTexture(Description, *PassName);
+
+    // Render shader
+    TShaderMapRef<FCustomScreenPassVS> VertexShader(View.ShaderMap);
+    TShaderMapRef<FDownsamplePS> PixelShader(View.ShaderMap);
+
+    FDownsamplePS::FParameters* PassParameters = GraphBuilder.AllocParameters<FDownsamplePS::FParameters>();
+    PassParameters->Pass.InputTexture = InputTexture;
+    PassParameters->Pass.RenderTargets[0] = FRenderTargetBinding(Texture, ERenderTargetLoadAction::ENoAction);
+    PassParameters->InputSampler = BilinearClampSampler;
+    PassParameters->InputSize = FVector2f(Viewport2.Size());
+    PassParameters->ThresholdLevel = PostProcessAsset->ThresholdLevel;
+    PassParameters->ThresholdRange = PostProcessAsset->ThresholdRange;
+
+    DrawShaderPass(
+        GraphBuilder,
+        PassName,
+        PassParameters,
+        VertexShader,
+        PixelShader,
+        ClearBlendState,
+        Viewport4
+    );
+
+    OutputTexture = Texture;
+}
+```
+Rescale Pass와 비슷한데, 우리고 보게 될 다른 렌더링 패스도 비슷할 것이다. 여기에는 주목할만한 새로운 것은 거의 없다.
+- `InputSize`는 입력 버퍼의 해상도다. (Scene Color의 half)
+- `DrawShaderPass()`와 `Texture` 해상도는 `Viewpart4`로 설정되는데 우리는 다운샘플링을 하기 때문에 이전 해상도를 2로 나눠준 값을 사용할 필요가 있다.
+- `Texture`는 `OutputTexture`로 할당된다.
+파라미터 값이 `PostProcessAsset`값에서 설정됨을 알 수 있다.
+___
+이제 블러를 추가해 준다.
+**TODO_THRESHOLD_BLUR**
+```CPP
+    {
+        OutputTexture = RenderBlur(
+            GraphBuilder,
+            OutputTexture,
+            View,
+            Viewport2,
+            1
+        );
+    }
+
+    return OutputTexture;
+
+} // End of RenderThreshold()
+```
+자세한 함수는 다음 섹션에서 다룬다.
+여기서 주목할 점은 ==**1**==이 함수의 파라미터로 들어간다는 점인데, 이것은 한번의 블러만 수행됨을 의미한다. 추가적인 패스는 비용이 들기도 하고 이미 사용자 정의 다운샘플 패스를 사용 했기 때문에, 추가적인 블러는 필요없다.
+___
+# 11. Blur Function
+작성자는 여러가지 블러 방법을 시도해 보았다.
+- **Box blur**: 너무 각져 퀄리티면에서 만족하지 못함.
+- **Circular blur**: 간단한 보케효과에는 좋지만, 일반적인 블러링에는 이상한 패턴이다.
+- **Gaussian blur**": 초기버전은 Mipmap을 계산해야 했기 때문에 꽤 많은 추가적인 패스가 필요했었다.(또한 품질 / 필터링 문제가 있었는데, 잘못 작성되서 그럴 수도 있음)
+최종적으론, **Dual Kawase**를 사용했는데, 기존 Kawase 방식의 향상된 버전으로 빠른 컴퓨팅속도로 가우시안 블러를 모방하는 방식이다. 이름은 GDC에서 발표를 했었던 **Masaki Kawase**의 이름에서 따왔다.
+
+블러의 방법은 간단히 말하자면 각각의 픽셀이 이웃을 샘플링 하는 패스를 여러번 하는 것이다. 따라서 블러의 강도는 패스가 수행되는 수에 따라 결정된다.
+![[Pasted image 20240416175428.png]]
