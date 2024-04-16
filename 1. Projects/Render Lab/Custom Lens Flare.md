@@ -1088,3 +1088,4 @@ void DownsampleThresholdPS(
     OutColor.rgb *= ThresholdScale;
 }
 ```
+코드에서 볼 수 있듯이, 먼저 13개의 샘플을 구한뒤 fade in/out의 레벨과 범위를 지정하여 작동하는 임계값(Threshold)을 만든다. 임계값은 Dot product를 통해 계산된 픽셀 밝기를 기반으로 적용된다.
