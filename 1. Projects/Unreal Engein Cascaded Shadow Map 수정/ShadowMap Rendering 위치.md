@@ -1,5 +1,5 @@
 
-- DefferedShadingRenderer.cpp
+- DeferredShadingRenderer.cpp
 ```cpp
 // 2465번째 줄
 void FDeferredShadingSceneRenderer::Render(FRDGBuilder& GraphBuilder)
