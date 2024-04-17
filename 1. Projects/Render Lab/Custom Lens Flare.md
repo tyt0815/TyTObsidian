@@ -1536,5 +1536,32 @@ ___
 화면의 특정 위치에서 Ghost를 숨기기 위해 몇가지 사용자 정의 마스크를 사용한다는 점에 주의하자.
 **TODO_SHADER_GHOSTS**
 ```cpp
+    // Ghost shader
+    class FLensFlareGhostsPS : public FGlobalShader
+    {
+        public:
+            DECLARE_GLOBAL_SHADER(FLensFlareGhostsPS);
+            SHADER_USE_PARAMETER_STRUCT(FLensFlareGhostsPS, FGlobalShader);
+
+            BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+                SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
+                SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
+                SHADER_PARAMETER_ARRAY(FVector4f, GhostColors, [8])
+                SHADER_PARAMETER_ARRAY(float, GhostScales, [8])
+                SHADER_PARAMETER(float, Intensity)
+            END_SHADER_PARAMETER_STRUCT()
+
+            static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+            {
+                return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+            }
+    };
+    IMPLEMENT_GLOBAL_SHADER(FLensFlareGhostsPS, "/CustomShaders/Ghosts.usf", "GhostsPS", SF_Pixel);
+```
+`SHADER_PARAMETER_ARRAY`라는 새로운 타입의 파라미터가 보이는데, 이 매크로는 셰이더에 사용되는 배열을 정의하는 매크로다. 매크로의 인자는 데이터타입, 변수명, 배열의 크기 세개를 받는다.
+지금의 경우에는 그릴 고스트의 숫자는 고정되어 있다.(Data Asset에서)
+___
+**Ghosts.usf**
+```hlsl
 
 ```
