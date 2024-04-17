@@ -1615,5 +1615,202 @@ void GhostsPS(
 ___
 **TODO_FLARE_GHOSTS**
 ```cpp
+    {
+        const FString PassName("LensFlareGhosts");
 
+        // Build buffer
+        FRDGTextureDesc Description = InputTexture->Desc;
+        Description.Reset();
+        Description.Extent  = Viewport2.Size();
+        Description.Format  = PF_FloatRGB;
+        Description.ClearValue = FClearValueBinding(FLinearColor::Transparent);
+        FRDGTextureRef Texture = GraphBuilder.CreateTexture(Description, *PassName);
+
+        // Shader parameters
+        TShaderMapRef<FCustomScreenPassVS> VertexShader(View.ShaderMap);
+        TShaderMapRef<FLensFlareGhostsPS> PixelShader(View.ShaderMap);
+
+        FLensFlareGhostsPS::FParameters* PassParameters = GraphBuilder.AllocParameters<FLensFlareGhostsPS::FParameters>();
+        PassParameters->Pass.InputTexture       = ChromaTexture;
+        PassParameters->Pass.RenderTargets[0]   = FRenderTargetBinding(Texture, ERenderTargetLoadAction::ENoAction);
+        PassParameters->InputSampler            = BilinearBorderSampler;
+        PassParameters->Intensity               = PostProcessAsset->GhostIntensity;
+
+        PassParameters->GhostColors[0] = PostProcessAsset->Ghost1.Color;
+        PassParameters->GhostColors[1] = PostProcessAsset->Ghost2.Color;
+        PassParameters->GhostColors[2] = PostProcessAsset->Ghost3.Color;
+        PassParameters->GhostColors[3] = PostProcessAsset->Ghost4.Color;
+        PassParameters->GhostColors[4] = PostProcessAsset->Ghost5.Color;
+        PassParameters->GhostColors[5] = PostProcessAsset->Ghost6.Color;
+        PassParameters->GhostColors[6] = PostProcessAsset->Ghost7.Color;
+        PassParameters->GhostColors[7] = PostProcessAsset->Ghost8.Color;
+
+        PassParameters->GhostScales[0] = PostProcessAsset->Ghost1.Scale;
+        PassParameters->GhostScales[1] = PostProcessAsset->Ghost2.Scale;
+        PassParameters->GhostScales[2] = PostProcessAsset->Ghost3.Scale;
+        PassParameters->GhostScales[3] = PostProcessAsset->Ghost4.Scale;
+        PassParameters->GhostScales[4] = PostProcessAsset->Ghost5.Scale;
+        PassParameters->GhostScales[5] = PostProcessAsset->Ghost6.Scale;
+        PassParameters->GhostScales[6] = PostProcessAsset->Ghost7.Scale;
+        PassParameters->GhostScales[7] = PostProcessAsset->Ghost8.Scale;
+
+        // Render
+        DrawShaderPass(
+            GraphBuilder,
+            PassName,
+            PassParameters,
+            VertexShader,
+            PixelShader,
+            ClearBlendState,
+            Viewport2
+        );
+
+        OutputTexture = Texture;
+    }
 ```
+특별한점이라곤 없지만 데이터 에셋이 배열을 사용하지 않기 때문에 루프문 없이 파라미터를 할당해 주고 있다. 그 이유는 UE 데이터 에셋의 버그가 있어서 라는데 자세한 내용은 [이곳](https://www.froyok.fr/blog/2021-04-fixing-ue4-flares/)을 참고.
+___
+## Halo Subpass
+헤일로 이펙트는 John Chapman의 아티클을 베이스로 만들어 졌다.
+![[Pasted image 20240417201331.png]]
+대략적인 아이디어는 UV좌표를 왜곡하는 방향 벡터를 만드는 것이다. 이것은 화면 중앙에 있는 밝은 빛을 화면 가장자리로 밀어준다.
+
+작성자는 UV를 어떤 것이 더 멀리 떨어지도록 왜곡하는 fish eye 이펙트로 조정했다. 이는 대부분의 경우 매우 얇은 헤일로를 얻고 이전에 추가한 고스트와의 중첩을 피하고자 했기 때문이다.
+___
+일반 헤일로(왼쪽)와 피쉬아이 헤일로(오른쪽)
+![[Pasted image 20240417201609.png]]
+___
+**TODO_SHADER_HALO**
+```cpp
+	class FLensFlareHaloPS : public FGlobalShader
+    {
+        public:
+            DECLARE_GLOBAL_SHADER(FLensFlareHaloPS);
+            SHADER_USE_PARAMETER_STRUCT(FLensFlareHaloPS, FGlobalShader);
+
+            BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+                SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
+                SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
+                SHADER_PARAMETER(float, Width)
+                SHADER_PARAMETER(float, Mask)
+                SHADER_PARAMETER(float, Compression)
+                SHADER_PARAMETER(float, Intensity)
+                SHADER_PARAMETER(float, ChromaShift)
+            END_SHADER_PARAMETER_STRUCT()
+
+            static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+            {
+                return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+            }
+    };
+    IMPLEMENT_GLOBAL_SHADER(FLensFlareHaloPS, "/CustomShaders/Halo.usf", "HaloPS", SF_Pixel);
+```
+여기서 주의할 점은 float 매개변수가 있다는 것인데, FVector로 그룹화 하는 것이 좋아보일 수 있지만 RDG가 이러한 종류의 매개변수 그룹화/배치를 자동으로 수행하기 때문에 별도로 합칠 필요가 없다.
+___
+**Halo.usf**
+```hlsl
+#include "Shared.ush"
+
+float2 FisheyeUV( float2 UV, float Compression, float Zoom )
+{
+    float2 NegPosUV = (2.0f * UV - 1.0f);
+
+    float Scale = Compression * atan( 1.0f / Compression );
+    float RadiusDistance = length(NegPosUV) * Scale;
+    float RadiusDirection = Compression * tan( RadiusDistance / Compression ) * Zoom;
+    float Phi = atan2( NegPosUV.y, NegPosUV.x );
+
+    float2 NewUV = float2(  RadiusDirection * cos(Phi) + 1.0,
+                            RadiusDirection * sin(Phi) + 1.0 );
+    NewUV = NewUV / 2.0;
+
+    return NewUV;
+}
+
+[...]
+```
+피쉬아이 함수는 UV를 왜곡한다. [이 shadertoy](https://www.shadertoy.com/view/tstBDl)를 베이스로 살짝 조정을 통해 이펙트의 스케일을 쉽게 조절할 수 있다.
+```hlsl
+[...]
+
+float Width;
+float Mask;
+float Compression;
+float Intensity;
+float ChromaShift;
+
+void HaloPS(
+    in noperspective float4 UVAndScreenPos : TEXCOORD0,
+    out float3 OutColor : SV_Target0)
+{
+    const float2 CenterPoint = float2( 0.5f, 0.5f );
+
+    // UVs
+    float2 UV = UVAndScreenPos.xy;
+    float2 FishUV = FisheyeUV( UV, Compression, 1.0f );
+
+    // Distortion vector
+    float2 HaloVector = normalize( CenterPoint - UV ) * Width;
+
+    // Halo mask
+    float HaloMask = distance( UV, CenterPoint );
+    HaloMask = saturate(HaloMask * 2.0f);
+    HaloMask = smoothstep( Mask, 1.0f, HaloMask );
+
+    // Screen border mask
+    float2 ScreenPos = UVAndScreenPos.zw;
+    float ScreenborderMask = DiscMask(ScreenPos);
+    ScreenborderMask *= DiscMask(ScreenPos * 0.8f);
+    ScreenborderMask = ScreenborderMask * 0.95 + 0.05; // Scale range
+
+    // Chroma offset
+    float2 UVr = (FishUV - CenterPoint) * (1.0f + ChromaShift) + CenterPoint + HaloVector;
+    float2 UVg = FishUV + HaloVector;
+    float2 UVb = (FishUV - CenterPoint) * (1.0f - ChromaShift) + CenterPoint + HaloVector;
+
+    // Sampling
+    OutColor.r = Texture2DSample( InputTexture, InputSampler, UVr ).r;
+    OutColor.g = Texture2DSample( InputTexture, InputSampler, UVg ).g;
+    OutColor.b = Texture2DSample( InputTexture, InputSampler, UVb ).b;
+
+    OutColor.rgb *= ScreenborderMask * HaloMask * Intensity;
+
+}
+```
+위에서 언급되었다 시피, 모든 작업은 UV 좌표를 바꾸는 것으로 행해진다. 피쉬아이 UV는 먼저 계산되고, `HaloVector`가 화면 중앙으로부터 방향을 계산한다. 샘플링이 발생할때 UV좌표에 추가된다.
+
+유령과 달리 크로마 효과는 동일한 셰이더 내에서 세개의 별도 샘플을 통해 수행된다. 마지막에 결과는 일부 아티팩트를 숨기기 위해 몇가지 사용자 정의 마스크로 마스킹 된다. `DiscMask()`함수에 주목하자면 이 함수는 radial/vignette 타입의 마스킹을 생성하는 데 사용된다. 마스크가 너무 많은 색상을 플러시 하지 않도록 하기 위해 범위가 순수한 블랙으로 가는 값을 피하기 위해 조정된다.
+___
+**TODO_FLARE_HALO**
+```Cpp
+    {
+        // Render shader
+        const FString PassName("LensFlareHalo");
+
+        TShaderMapRef<FCustomScreenPassVS> VertexShader(View.ShaderMap);
+        TShaderMapRef<FLensFlareHaloPS> PixelShader(View.ShaderMap);
+
+        FLensFlareHaloPS::FParameters* PassParameters = GraphBuilder.AllocParameters<FLensFlareHaloPS::FParameters>();
+        PassParameters->Pass.InputTexture       = InputTexture;
+        PassParameters->Pass.RenderTargets[0]   = FRenderTargetBinding(OutputTexture, ERenderTargetLoadAction::ELoad);
+        PassParameters->InputSampler            = BilinearBorderSampler;
+        PassParameters->Intensity               = PostProcessAsset->HaloIntensity;
+        PassParameters->Width                   = PostProcessAsset->HaloWidth;
+        PassParameters->Mask                    = PostProcessAsset->HaloMask;
+        PassParameters->Compression             = PostProcessAsset->HaloCompression;
+        PassParameters->ChromaShift             = PostProcessAsset->HaloChromaShift;
+
+        DrawShaderPass(
+            GraphBuilder,
+            PassName,
+            PassParameters,
+            VertexShader,
+            PixelShader,
+            AdditiveBlendState,
+            Viewport2
+        );
+    }
+```
+이 렌더링 패스는 이전과는 약간 다른게, 새로운 버퍼를 생성하는 대신 이미 고스트가 포함된 이전 버퍼에 덮어쓰기를 한다.
+중간버퍼에 그려서 고스트 위에 복사하는 것은 의미가 없다. 따라서 기존 콘텐츠 위에 그냥 덮어 씌우는 것이 더 빠르고 저렴하다. 추가 모드로 설정되어 있고, 렌즈 플레어는 조명 정보이므로 이 방법이 잘 작동한다.
+___
