@@ -1547,7 +1547,7 @@ ___
                 SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
                 SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
                 SHADER_PARAMETER_ARRAY(FVector4f, GhostColors, [8])
-                SHADER_PARAMETER_ARRAY(float, GhostScales, [8])
+                SHADER_PARAMETER_SCALAR_ARRAY(float, GhostScales, [8])
                 SHADER_PARAMETER(float, Intensity)
             END_SHADER_PARAMETER_STRUCT()
 
@@ -1814,3 +1814,25 @@ ___
 이 렌더링 패스는 이전과는 약간 다른게, 새로운 버퍼를 생성하는 대신 이미 고스트가 포함된 이전 버퍼에 덮어쓰기를 한다.
 중간버퍼에 그려서 고스트 위에 복사하는 것은 의미가 없다. 따라서 기존 콘텐츠 위에 그냥 덮어 씌우는 것이 더 빠르고 저렴하다. 추가 모드로 설정되어 있고, 렌즈 플레어는 조명 정보이므로 이 방법이 잘 작동한다.
 ___
+아직 문제가 있는데 가끔 아티팩트나 엘리어싱이 눈에 띈다.
+![[Pasted image 20240417204210.png]]
+이러한 문제를 해결하기 위해 여러가지 시도를 해보았지만, 단순히 블러링 하는 것이 가장 효과적이었다. 고스트와 결합된 헤일로를 같이 블러링하는 것 또한 하나의 어드벤티지다.
+
+따라서, 마지막에 단순히 블러 함수를 호출해 주기만 하면 된다.
+```cpp
+    {
+        OutputTexture = RenderBlur(
+            GraphBuilder,
+            OutputTexture,
+            View,
+            Viewport2,
+            1
+        );
+    }
+
+    return OutputTexture;
+
+} // End of RenderFlare()
+```
+___
+# 13. Glare Pass
