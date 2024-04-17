@@ -1645,14 +1645,14 @@ ___
         PassParameters->GhostColors[6] = PostProcessAsset->Ghost7.Color;
         PassParameters->GhostColors[7] = PostProcessAsset->Ghost8.Color;
 
-        PassParameters->GhostScales[0] = PostProcessAsset->Ghost1.Scale;
-        PassParameters->GhostScales[1] = PostProcessAsset->Ghost2.Scale;
-        PassParameters->GhostScales[2] = PostProcessAsset->Ghost3.Scale;
-        PassParameters->GhostScales[3] = PostProcessAsset->Ghost4.Scale;
-        PassParameters->GhostScales[4] = PostProcessAsset->Ghost5.Scale;
-        PassParameters->GhostScales[5] = PostProcessAsset->Ghost6.Scale;
-        PassParameters->GhostScales[6] = PostProcessAsset->Ghost7.Scale;
-        PassParameters->GhostScales[7] = PostProcessAsset->Ghost8.Scale;
+        GET_SCALAR_ARRAY_ELEMENT(PassParameters->GhostScales, 0) = PostProcessAsset->Ghost1.Scale;
+GET_SCALAR_ARRAY_ELEMENT(PassParameters->GhostScales, 1) = PostProcessAsset->Ghost2.Scale;
+GET_SCALAR_ARRAY_ELEMENT(PassParameters->GhostScales, 2) = PostProcessAsset->Ghost3.Scale;
+GET_SCALAR_ARRAY_ELEMENT(PassParameters->GhostScales, 3) = PostProcessAsset->Ghost4.Scale;
+GET_SCALAR_ARRAY_ELEMENT(PassParameters->GhostScales, 4) = PostProcessAsset->Ghost5.Scale;
+GET_SCALAR_ARRAY_ELEMENT(PassParameters->GhostScales, 5) = PostProcessAsset->Ghost6.Scale;
+GET_SCALAR_ARRAY_ELEMENT(PassParameters->GhostScales, 6) = PostProcessAsset->Ghost7.Scale;
+GET_SCALAR_ARRAY_ELEMENT(PassParameters->GhostScales, 7) = PostProcessAsset->Ghost8.Scale;
 
         // Render
         DrawShaderPass(
