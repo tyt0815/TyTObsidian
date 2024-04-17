@@ -1244,5 +1244,78 @@ ___
 이어서 렌더링 루프문이다.
 ```cpp
 	[...]
-	
+	    // Render
+    for (int32 i = 0; i < ArraySize; i++)
+    {
+        // Build texture
+        FRDGTextureDesc BlurDesc = InputDescription;
+        BlurDesc.Reset();
+        BlurDesc.Extent = Viewports[i].Size();
+        BlurDesc.Format = PF_FloatRGB;
+        BlurDesc.NumMips = 1;
+        BlurDesc.ClearValue = FClearValueBinding(FLinearColor::Transparent);
+
+        FVector2f ViewportResolution = FVector2f(
+            Viewports[i].Width(),
+            Viewports[i].Height()
+        );
+
+        const FString PassName =
+            FString("KawaseBlur")
+            + FString::Printf(TEXT("_%i_"), i)
+            + ((i < BlurSteps) ? PassDownName : PassUpName)
+            + FString::Printf(TEXT("_%ix%i"), Viewports[i].Width(), Viewports[i].Height());
+
+        FRDGTextureRef Buffer = GraphBuilder.CreateTexture(BlurDesc, *PassName);
+
+        // Render shader
+        if (i < BlurSteps)
+        {
+            FKawaseBlurDownPS::FParameters* PassDownParameters = GraphBuilder.AllocParameters<FKawaseBlurDownPS::FParameters>();
+            PassDownParameters->Pass.InputTexture = PreviousBuffer;
+            PassDownParameters->Pass.RenderTargets[0] = FRenderTargetBinding(Buffer, ERenderTargetLoadAction::ENoAction);
+            PassDownParameters->InputSampler = BilinearClampSampler;
+            PassDownParameters->BufferSize = ViewportResolution;
+
+            DrawShaderPass(
+                GraphBuilder,
+                PassName,
+                PassDownParameters,
+                VertexShader,
+                PixelShaderDown,
+                ClearBlendState,
+                Viewports[i]
+            );
+        }
+        else
+        {
+            FKawaseBlurUpPS::FParameters* PassUpParameters = GraphBuilder.AllocParameters<FKawaseBlurUpPS::FParameters>();
+            PassUpParameters->Pass.InputTexture = PreviousBuffer;
+            PassUpParameters->Pass.RenderTargets[0] = FRenderTargetBinding(Buffer, ERenderTargetLoadAction::ENoAction);
+            PassUpParameters->InputSampler = BilinearClampSampler;
+            PassUpParameters->BufferSize = ViewportResolution;
+
+            DrawShaderPass(
+                GraphBuilder,
+                PassName,
+                PassUpParameters,
+                VertexShader,
+                PixelShaderUp,
+                ClearBlendState,
+                Viewports[i]
+            );
+        }
+
+        PreviousBuffer = Buffer;
+    }
+
+    return PreviousBuffer;
+}
+```
+RDG 셰이더 파라미터를 재사용하는 것을 허용하지 않기 때문에 각각의 패스에서 `AllocParameters()`를 통해 매번 새로운 파라미터를 할당해 주어야 한다.
+___
+이제 셰이더를 셋업해보자.
+**TODO_SHADER_KAWASE**
+```cpp
+
 ```
