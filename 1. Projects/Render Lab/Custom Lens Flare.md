@@ -205,6 +205,10 @@ public:
 };
 
 ```
+에디터에서, 데이터 에셋을 만들어 주자.
+![[Pasted image 20240417161956.png]]
+그리고 후에 설정하게 될 에셋 패스는 아래와 같이 **Copy Reference**를 활용해서 하면 된다.
+![[Pasted image 20240417162035.png]]
 
 # 4. 엔진 렌더링 패스 수정
 **PostProcessLensFlares.h**파일에서, `struct FLensFlareInputs`에 새로운 파라미터를 추가해 준다. 이 구조체는 포스트 프로세스 렌더링 단계에서 렌더링 패스 자체로 몇 가지 설정을 전송하는데 사용된다.
@@ -497,7 +501,7 @@ void UPostProcessSubsystem::Initialize( FSubsystemCollectionBase& Collection )
     //--------------------------------
     // Data asset loading
     //--------------------------------
-    FString Path = "PostProcessLensFlareAsset'/CustomPostProcess/DefaultLensFlare.DefaultLensFlare'";
+    FString Path = "Copy Reference of My Asset";
 
     PostProcessAsset = LoadObject<UPostProcessLensFlareAsset>( nullptr, *Path );
     check(PostProcessAsset);
