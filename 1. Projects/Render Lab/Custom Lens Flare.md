@@ -1184,3 +1184,55 @@ ___
 듀얼 버전은 GPU의 이중선형 샘플링의 이점을 활용한다. 같은 사이즈의 버퍼를 사용하는 게 아닌, 각각의 패스는 이전 결과의 다운샘플링이다.그리고 중간에 업샘플링 패스를 통과한다. 다운과 업 과정은 이중선형보간의 이점을 가져가게 된다.
 이것이 의미하는 것은 필요한 총 패스 수를 줄이고 더 낮은 해상도를 처리함으로 필레이트를 향상시킬 수 있다.
 ___
+이 블러 방식은 몇번 사용하게 될 예정이라, 따로 `RenderBlur()함수를 만들어서 구현한다.
+**TODO_BLUR**
+```CPP
+FRDGTextureRef UPostProcessSubsystem::RenderBlur(
+        FRDGBuilder& GraphBuilder,
+        FRDGTextureRef InputTexture,
+        const FViewInfo& View,
+        const FIntRect& Viewport,
+        int BlurSteps
+    )
+{
+    // Shader setup
+    TShaderMapRef<FCustomScreenPassVS>  VertexShader(View.ShaderMap);
+    TShaderMapRef<FKawaseBlurDownPS>    PixelShaderDown(View.ShaderMap);
+    TShaderMapRef<FKawaseBlurUpPS>      PixelShaderUp(View.ShaderMap);
+
+    // Data setup
+    FRDGTextureRef PreviousBuffer = InputTexture;
+    const FRDGTextureDesc& InputDescription = InputTexture->Desc;
+
+    const FString PassDownName  = TEXT("Down");
+    const FString PassUpName    = TEXT("Up");
+    const int32 ArraySize = BlurSteps * 2;
+
+    // Viewport resolutions
+    // Could have been a bit more clever and avoid duplicate
+    // sizes for upscale passes but heh... it works.
+    int32 Divider = 2;
+    TArray<FIntRect> Viewports;
+    for( int32 i = 0; i < ArraySize; i++ )
+    {
+        FIntRect NewRect = FIntRect(
+            0,
+            0,
+            Viewport.Width() / Divider,
+            Viewport.Height() / Divider
+        );
+
+        Viewports.Add( NewRect );
+
+        if( i < (BlurSteps - 1) )
+        {
+            Divider *= 2;
+        }
+        else
+        {
+            Divider /= 2;
+        }
+    }
+
+[...]
+```
