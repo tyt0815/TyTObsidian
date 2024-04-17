@@ -928,7 +928,7 @@ ___
 이제 셰이더를 사용하는 코드를 추가해 보자.
 
 **TODO_RESCALE**
-```
+```cpp
 #if WITH_EDITOR
     if( SceneColorViewport.Rect.Width()  != SceneColorViewport.Extent.X
     ||  SceneColorViewport.Rect.Height() != SceneColorViewport.Extent.Y )
@@ -1317,5 +1317,212 @@ ___
 이제 셰이더를 셋업해보자.
 **TODO_SHADER_KAWASE**
 ```cpp
+ // Blur shader (use Dual Kawase method)
+ class FKawaseBlurDownPS : public FGlobalShader
+ {
+ public:
+     DECLARE_GLOBAL_SHADER(FKawaseBlurDownPS);
+     SHADER_USE_PARAMETER_STRUCT(FKawaseBlurDownPS, FGlobalShader);
 
+     BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+         SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
+         SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
+         SHADER_PARAMETER(FVector2f, BufferSize)
+     END_SHADER_PARAMETER_STRUCT()
+
+         static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+     {
+         return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+     }
+ };
+
+ class FKawaseBlurUpPS : public FGlobalShader
+ {
+ public:
+     DECLARE_GLOBAL_SHADER(FKawaseBlurUpPS);
+     SHADER_USE_PARAMETER_STRUCT(FKawaseBlurUpPS, FGlobalShader);
+
+     BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+         SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
+         SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
+         SHADER_PARAMETER(FVector2f, BufferSize)
+         END_SHADER_PARAMETER_STRUCT()
+
+         static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+     {
+         return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+     }
+ };
+ IMPLEMENT_GLOBAL_SHADER(FKawaseBlurDownPS, "/CustomShaders/DualKawaseBlur.usf", "KawaseBlurDownsamplePS", SF_Pixel);
+ IMPLEMENT_GLOBAL_SHADER(FKawaseBlurUpPS, "/CustomShaders/DualKawaseBlur.usf", "KawaseBlurUpsamplePS", SF_Pixel);
 ```
+___
+**DualKawaseBlur.usf**
+```hlsl
+#include "Shared.ush"
+
+float2 BufferSize;
+
+void KawaseBlurDownsamplePS(
+    in noperspective float4 UVAndScreenPos : TEXCOORD0,
+    out float4 OutColor : SV_Target0 )
+{
+    float2 UV = UVAndScreenPos.xy;
+    float2 HalfPixel = (1.0f / BufferSize) * 0.5f;
+
+    float2 DirDiag1 = float2( -HalfPixel.x,  HalfPixel.y ); // Top left
+    float2 DirDiag2 = float2(  HalfPixel.x,  HalfPixel.y ); // Top right
+    float2 DirDiag3 = float2(  HalfPixel.x, -HalfPixel.y ); // Bottom right
+    float2 DirDiag4 = float2( -HalfPixel.x, -HalfPixel.y ); // Bottom left
+
+    float3 Color = Texture2DSample(InputTexture, InputSampler, UV ).rgb * 4.0f;
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirDiag1 ).rgb;
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirDiag2 ).rgb;
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirDiag3 ).rgb;
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirDiag4 ).rgb;
+
+    OutColor.rgb = Color / 8.0f;
+    OutColor.a = 0.0f;
+}
+
+void KawaseBlurUpsamplePS(
+    in noperspective float4 UVAndScreenPos : TEXCOORD0,
+    out float4 OutColor : SV_Target0 )
+{
+    float2 UV = UVAndScreenPos.xy;
+    float2 HalfPixel = (1.0f / BufferSize) * 0.5f;
+
+    float2 DirDiag1 = float2( -HalfPixel.x,  HalfPixel.y ); // Top left
+    float2 DirDiag2 = float2(  HalfPixel.x,  HalfPixel.y ); // Top right
+    float2 DirDiag3 = float2(  HalfPixel.x, -HalfPixel.y ); // Bottom right
+    float2 DirDiag4 = float2( -HalfPixel.x, -HalfPixel.y ); // Bottom left
+    float2 DirAxis1 = float2( -HalfPixel.x,  0.0f );        // Left
+    float2 DirAxis2 = float2(  HalfPixel.x,  0.0f );        // Right
+    float2 DirAxis3 = float2( 0.0f,  HalfPixel.y );         // Top
+    float2 DirAxis4 = float2( 0.0f, -HalfPixel.y );         // Bottom
+
+    float3 Color = float3( 0.0f, 0.0f, 0.0f );
+
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirDiag1 ).rgb;
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirDiag2 ).rgb;
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirDiag3 ).rgb;
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirDiag4 ).rgb;
+
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirAxis1 ).rgb * 2.0f;
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirAxis2 ).rgb * 2.0f;
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirAxis3 ).rgb * 2.0f;
+    Color += Texture2DSample(InputTexture, InputSampler, UV + DirAxis4 ).rgb * 2.0f;
+
+    OutColor.rgb = Color / 12.0f;
+    OutColor.a = 0.0f;
+}
+```
+다운 샘플 함수는 네방향의 네 샘플을 사용한다. 업샘플 함수는 여덟개의 샘플을 사용한다.
+
+==주의할 점은 해상도에 따라 동일한 수준의 블러에 도달하기 위해 패스의 수가 다를수 있다. 이 글은 1080p를 기준으로 하지만 더 높은 해상도(ex.4K)에서는 더 많은 패스 수가 필요할 수 있다.==
+___
+# 12. Ghost Pass
+- **Chromatic shift**: Threshold pass의 결과물에 약간의 chromatic aberration을 적용한다.
+- **Ghost loop**: 이전 결과를 다양한 비율로 여러번 그려 고스트 효과를 만들어 낸다.
+- **Halo**: Threshold pass의 결과를 읽어 변형시켜 Halo 효과를 만들어 낸다.
+이상이 `RenderFlare()`에서 수행될 내용이다.
+___
+## Chroma Shift Subpass
+**TODO_SHADER_CHROMA**
+```cpp
+    // Chromatic shift shader
+    class FLensFlareChromaPS : public FGlobalShader
+    {
+        public:
+            DECLARE_GLOBAL_SHADER(FLensFlareChromaPS);
+            SHADER_USE_PARAMETER_STRUCT(FLensFlareChromaPS, FGlobalShader);
+
+            BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+                SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
+                SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
+                SHADER_PARAMETER(float, ChromaShift)
+            END_SHADER_PARAMETER_STRUCT()
+
+            static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+            {
+                return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+            }
+    };
+    IMPLEMENT_GLOBAL_SHADER(FLensFlareChromaPS, "/CustomShaders/Chroma.usf", "ChromaPS", SF_Pixel);
+```
+___
+**Chroma.usf**
+```hlsl
+#include "Shared.ush"
+
+float ChromaShift;
+
+void ChromaPS(
+    in noperspective float4 UVAndScreenPos : TEXCOORD0,
+    out float3 OutColor : SV_Target0)
+{
+    float2 UV = UVAndScreenPos.xy;
+    const float2 CenterPoint = float2( 0.5f, 0.5f );
+    float2 UVr = (UV - CenterPoint) * (1.0f + ChromaShift) + CenterPoint;
+    float2 UVb = (UV - CenterPoint) * (1.0f - ChromaShift) + CenterPoint;
+
+    OutColor.r = Texture2DSample(InputTexture, InputSampler, UVr ).r;
+    OutColor.g = Texture2DSample(InputTexture, InputSampler, UV  ).g;
+    OutColor.b = Texture2DSample(InputTexture, InputSampler, UVb ).b;
+}
+```
+___
+**TODO_FLARE_CHROMA**
+```cpp
+	RDG_EVENT_SCOPE(GraphBuilder, "FlarePass");
+
+    FRDGTextureRef OutputTexture = nullptr;
+
+    FIntRect Viewport = View.ViewRect;
+    FIntRect Viewport2 = FIntRect( 0, 0,
+        View.ViewRect.Width() / 2,
+        View.ViewRect.Height() / 2
+    );
+    FIntRect Viewport4 = FIntRect( 0, 0,
+        View.ViewRect.Width() / 4,
+        View.ViewRect.Height() / 4
+    );
+```
+Threshold 함수에서 처럼, 렌더링전에 약간의 셋업을 해준다. 그리고 chromatic shift pass를 수행한다.
+```cpp
+	FRDGTextureRef ChromaTexture = nullptr;
+
+    {
+        const FString PassName("LensFlareChromaGhost");
+
+        // Build buffer
+        FRDGTextureDesc Description = InputTexture->Desc;
+        Description.Reset();
+        Description.Extent  = Viewport2.Size();
+        Description.Format  = PF_FloatRGB;
+        Description.ClearValue = FClearValueBinding(FLinearColor::Black);
+        ChromaTexture = GraphBuilder.CreateTexture(Description, *PassName);
+
+        // Shader parameters
+        TShaderMapRef<FCustomScreenPassVS> VertexShader(View.ShaderMap);
+        TShaderMapRef<FLensFlareChromaPS> PixelShader(View.ShaderMap);
+
+        FLensFlareChromaPS::FParameters* PassParameters = GraphBuilder.AllocParameters<FLensFlareChromaPS::FParameters>();
+        PassParameters->Pass.InputTexture       = InputTexture;
+        PassParameters->Pass.RenderTargets[0]   = FRenderTargetBinding(ChromaTexture, ERenderTargetLoadAction::ENoAction);
+        PassParameters->InputSampler            = BilinearBorderSampler;
+        PassParameters->ChromaShift             = PostProcessAsset->GhostChromaShift;
+
+        // Render
+        DrawShaderPass(
+            GraphBuilder,
+            PassName,
+            PassParameters,
+            VertexShader,
+            PixelShader,
+            ClearBlendState,
+            Viewport2
+        );
+    }
+```
+주의할 점은 `ChromaTexture`변수가 범위 밖에 위치한다는 점이다. 이번에는 렌더를 연결하지 않기 때문에 이후에 연결 가능하게 추가적인 버퍼가 필요하다.
