@@ -1566,29 +1566,29 @@ ___
 #include "Shared.ush"
 
 float4 GhostColors[8];
-float GhostScales[8];
+DECLARE_SCALAR_ARRAY(float, GhostScales, 8);
 float Intensity;
 
 void GhostsPS(
     in noperspective float4 UVAndScreenPos : TEXCOORD0,
-    out float4 OutColor : SV_Target0 )
+    out float4 OutColor : SV_Target0)
 {
     float2 UV = UVAndScreenPos.xy;
-    float3 Color = float3( 0.0f, 0.0f, 0.0f );
+    float3 Color = float3(0.0f, 0.0f, 0.0f);
 
-    for( int i = 0; i < 8; i++ )
+    for (int i = 0; i < 8; i++)
     {
         // Skip ghost if size is basically 0
-        if( abs(GhostColors[i].a * GhostScales[i]) > 0.0001f )
+        if (abs(GhostColors[i].a * GET_SCALAR_ARRAY_ELEMENT(GhostScales, i)) > 0.0001f)
         {
-            float2 NewUV = (UV - 0.5f) * GhostScales[i];
+            float2 NewUV = (UV - 0.5f) * GET_SCALAR_ARRAY_ELEMENT(GhostScales, i);
 
             // Local mask
-            float DistanceMask = 1.0f - distance( float2(0.0f, 0.0f), NewUV );
-            float Mask  = smoothstep( 0.5f, 0.9f, DistanceMask );
-            float Mask2 = smoothstep( 0.75f, 1.0f, DistanceMask ) * 0.95f + 0.05f;
+            float DistanceMask = 1.0f - distance(float2(0.0f, 0.0f), NewUV);
+            float Mask = smoothstep(0.5f, 0.9f, DistanceMask);
+            float Mask2 = smoothstep(0.75f, 1.0f, DistanceMask) * 0.95f + 0.05f;
 
-            Color += Texture2DSample(InputTexture, InputSampler, NewUV + 0.5f ).rgb
+            Color += Texture2DSample(InputTexture, InputSampler, NewUV + 0.5f).rgb
                     * GhostColors[i].rgb
                     * GhostColors[i].a
                     * Mask * Mask2;
@@ -1604,6 +1604,9 @@ void GhostsPS(
 }
 ```
 아래는 마스킹 작업이 하는 일에 대한 비교다. 로컬 마스크는 유령의 가운데를 밝게 만들지만 바깥쪽 테두리는 희미하게 만든다. 이것은 조명원을 직접 보면 밝게 느껴지고 멀리 보면 덜 하는 아트적 선택이다. 그런 다음 화면 테두리 마스크는 효과를 깨끗하게 만들어 보이지 않도록 화면 테두리에 심각한 이음선이 없도록 한다.
+==기존 작성자와 다른 점으로, 엔전의 버전이 업데이트 되면서 생긴 문제인진 모르겠지만 float형 배열을 선언할때는 `DECLARE_SCALAR_ARRAY()`를 사용하고, 사용할 때에도 `GET_SCALAR_ARRAY_ELEMENT()` 를 사용해 주어야 한다. C++코드에서 바인딩할 구조체를 만들대도 마찬가지로 `SHADER_PARAMETER_SCALAR_ARRAY()`를 사용한 모습을 볼 수 있다. 후에 나올 C++렌더링 코드에서도 `GET_SCALAR_ARRAY_ELEMENT()`를 사용해서 배열 요소에 접근하는 것을 확인할 수 있다.==
+
+
 ![[Pasted image 20240417194532.png]]
 (No Masking at all)
 ![[Pasted image 20240417194638.png]]
