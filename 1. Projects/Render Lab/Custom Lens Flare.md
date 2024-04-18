@@ -1839,3 +1839,199 @@ ___
 ```
 ___
 # 13. Glare Pass
+이 패스는 배트맨에서 영감을 많이 받았다고 한다.
+==빛을 생성하기 위한 또 다른 방법은 입력 버퍼에서 여러 방향으로 블러를 수행하고 이를 결합하여 이러한 빛 줄기를 만드는 것이다.이는 [마사키 카와세가 이 발표](https://genderi.org/frame-buffer-postprocessing-effects-in-double-s-t-e-a-l-wreckl.html)에서 시연한 대로다.
+![[Pasted image 20240418153554.png]]
+이 방법을 선택하지 않은 이유는 색상, 크기를 제어하기가 더 어렵고 많은 패스가 필요하며, 프로세스의 본질상 작은 세부 사항이 쉽게 손실될 수 있기 때문이다.==
+
+작성자가 새롭게 테스트한 길은 보다 성능이 좋고 멋진 것을 찾는 것이 어려웠다. 처음에는 Unreal Bokeh블러와 같은 아이디어로 버전을 만들었다: 각 픽셀마다 인스턴스화 되고 늘어난 사각형을 그려 별 모양을 만들었다. 각 필셀당 하나의 사각형만 그려지기 때문에 최소한 3개의 사각형이 필요하며, 교차점마다 6개의 가지가 생성된다. 이는 2x2블록으로 픽셀을 그룹화하고 각 블록마다 3개의 사각형이 할당되도록 구현되었다. 이 아이디어가 동작할 수 있다는 것을 입증했지만 여전히 성능이 좋지 않았다. GPU에서 사각형이 발산되는 방식에는 일정한 비용이 발생하는데, 아무 것도 그려지지 않을 때에도 높은 고정 비용이 발생했다.(또한 유사한 아이디어가 과거에 시도되었음을 알게 되었다.)
+___
+그래서 작성자는 프로세스를 분리하는 방식으로 접근해 보았다.
+![[Pasted image 20240418154208.png]]
+(이 도식에서 픽셀 셰이더가 가독성을 위해 지오메트리 셰이더와 결합되었음.)
+
+직접적으로 사각형을 렌더링하는 대신 포인트를 사용한다.(하나당 네개의 픽셀 그룹)
+버텍스 셰이더에서는 포인트 위치 주변의 여러 픽셀이 샘플링 된다. 결과가 결합되고 밝기가 계산된다.그런 다음 지오메트리 셰이더가 따라오고 이전의 밝기가 충분히 높으면 세개의 사각형을 방출한다.
+
+만약 어떤 포인트도 **유효**하지 않다면, 아무것도 래스터화 되지 않는다. 포인트를 발사하는 기본 비용은 매우 낮다. 모든 작업은 이제 지오메트리 셰이더 내에서 이루어지며 이를 쉽게 건너뛸 수 있다. 최종 비용은 이제 서로 겹치는 많은 사각형이 있을 때 겹침으로 인한 비용이 된다.
+
+아래는 각 포인트의 샘플링 패턴이다:
+![[Pasted image 20240418154918.png]]
+기본적으로, 2x2 픽셀 블록에 대해 중심과 각 모서리에서 정보를 읽는다. 이 때, 이중 선형 보간으로 픽셀을 읽기 때문에 많은 정보를 읽을 수 있다. 픽셀 값은 중심에서 더 큰 가중치로 계산된다.
+이 패턴은 전환 및 카메라 이동을 더 안정적으로 만드는 장점이 있다. 그렇지 않으면 Glare 효과가 Threshold 패스에서 보이는 것처럼 펄스가 나오거나 깜박일 수 있다. 여러번의 시행착오 끝에, 시각적으로 충분한 상태로 유지되면서도 저렴한(단 5회의 읽기만 필요한)이 사용자 정의 패턴을 고안했다. 더 많은 정보와 밝기를 잃지 않으면서 효과를 더 안정적으로 만드는 방법은 아직 찾이 못했다고 한다.
+
+Glare효과를 구현하기 위해 세개의 셰이더(버텍스, 지오메트리, 픽셀)가 필요하므로, 이 패스는 이전 것들과 약간 다르게 구성된다.
+___
+**TODO_SHADER_GLARE**
+```cpp
+	// Glare shader pass
+	class FLensFlareGlareVS : public FGlobalShader
+	{
+	public:
+	    DECLARE_GLOBAL_SHADER(FLensFlareGlareVS);
+	    SHADER_USE_PARAMETER_STRUCT(FLensFlareGlareVS, FGlobalShader);
+	
+	    BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+	        SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
+	        SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
+	        SHADER_PARAMETER(FIntPoint, TileCount)
+	        SHADER_PARAMETER(FVector4f, PixelSize)
+	        SHADER_PARAMETER(FVector2f, BufferSize)
+	    END_SHADER_PARAMETER_STRUCT()
+	};
+	class FLensFlareGlareGS : public FGlobalShader
+	{
+	public:
+	    DECLARE_GLOBAL_SHADER(FLensFlareGlareGS);
+	    SHADER_USE_PARAMETER_STRUCT(FLensFlareGlareGS, FGlobalShader);
+	
+	    BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+	        SHADER_PARAMETER(FVector4f, PixelSize)
+	        SHADER_PARAMETER(FVector2f, BufferSize)
+	        SHADER_PARAMETER(FVector2f, BufferRatio)
+	        SHADER_PARAMETER(float, GlareIntensity)
+	        SHADER_PARAMETER(float, GlareDivider)
+	        SHADER_PARAMETER(FVector4f, GlareTint)
+	        SHADER_PARAMETER_ARRAY(float, GlareScales, [3])
+	    END_SHADER_PARAMETER_STRUCT()
+	};
+	class FLensFlareGlarePS : public FGlobalShader
+	{
+	public:
+	    DECLARE_GLOBAL_SHADER(FLensFlareGlarePS);
+	    SHADER_USE_PARAMETER_STRUCT(FLensFlareGlarePS, FGlobalShader);
+	
+	    BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+	        SHADER_PARAMETER_SAMPLER(SamplerState, GlareSampler)
+	        SHADER_PARAMETER_TEXTURE(Texture2D, GlareTexture)
+	    END_SHADER_PARAMETER_STRUCT()
+	
+	        static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+	    {
+	        return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+	    }
+	};
+	IMPLEMENT_GLOBAL_SHADER(FLensFlareGlareVS, "/CustomShaders/Glare.usf", "GlareVS", SF_Vertex);
+	IMPLEMENT_GLOBAL_SHADER(FLensFlareGlareGS, "/CustomShaders/Glare.usf", "GlareGS", SF_Geometry);
+	IMPLEMENT_GLOBAL_SHADER(FLensFlareGlarePS, "/CustomShaders/Glare.usf", "GlarePS", SF_Pixel);
+
+```
+ 대부분의 셰이더 셋업은 이전 단계에서 보던 것들과 비슷하다. 처음보는 파라미터 매크로는 `SHADER_PARAMETER_TEXTURE`가 있는데, 이 매크로를 사용하면 일반적인 텍스처를 선언할 수 있다. **콘텐츠 브라우저에서 보는 것처럼 할 수 있다.**
+
+우리가 연결할 텍스처는 데이터 에셋에서 가져오는 라인 마스크다. (위의 도식도의 지오메트리 셰이더 부분에서 볼 수 있음.)
+___
+`RenderGlare()`함수를 작성해 본다.
+**TODO_GLARE**
+```cpp
+FRDGTextureRef UPostProcessSubsystem::RenderGlare(
+    FRDGBuilder& GraphBuilder,
+    FRDGTextureRef InputTexture,
+    FIntRect& InputRect,
+    const FViewInfo& View
+)
+{
+    RDG_EVENT_SCOPE(GraphBuilder, "GlarePass");
+
+    FRDGTextureRef OutputTexture = nullptr;
+
+    FIntRect Viewport4 = FIntRect(
+        0,
+        0,
+        View.ViewRect.Width() / 4,
+        View.ViewRect.Height() / 4
+    );
+
+    // Only render the Glare if its intensity is different from 0
+    if (PostProcessAsset->GlareIntensity > SMALL_NUMBER)
+    {
+        const FString PassName("LensFlareGlare");
+
+        // This compute the number of point that will be drawn
+        // Since we want one point for 2 by 2 pixel block we just 
+        // need to divide the resolution by two to get this value.
+        FIntPoint TileCount = Viewport4.Size();
+        TileCount.X = TileCount.X / 2;
+        TileCount.Y = TileCount.Y / 2;
+        int32 Amount = TileCount.X * TileCount.Y;
+
+        // Compute the ratio between the width and height
+        // to know how to adjust the scaling of the quads.
+        // (This assume width is bigger than height.)
+        FVector2f BufferRatio = FVector2f(
+            float(Viewport4.Height()) / float(Viewport4.Width()),
+            1.0f
+        );
+
+        // Build the buffer
+        FRDGTextureDesc Description = InputTexture->Desc;
+        Description.Reset();
+        Description.Extent = Viewport4.Size();
+        Description.Format = PF_FloatRGB;
+        Description.ClearValue = FClearValueBinding(FLinearColor::Transparent);
+        FRDGTextureRef GlareTexture = GraphBuilder.CreateTexture(Description, *PassName);
+
+        // Setup a few other variables that will 
+        // be needed by the shaders.
+        FVector4f PixelSize = FVector4f(0, 0, 0, 0);
+        PixelSize.X = 1.0f / float(Viewport4.Width());
+        PixelSize.Y = 1.0f / float(Viewport4.Height());
+        PixelSize.Z = PixelSize.X;
+        PixelSize.W = PixelSize.Y * -1.0f;
+
+        FVector2f BufferSize = FVector2f(Description.Extent);
+[...]
+```
+이 렌더링 패스는 if문 안에 있는데, 강도(Intensity)가 너무 작다고 여겨지면 쉽게 컴퓨팅을 제거할 수 있다. 마지막에 보이지 않을 것을 렌더링 할 필요는 없다. 그런 다음 몇가지 변수를 셋업한다.
+
+주석에 달린 것처럼, 그릴 포인트의 양은 쿼드를 그릴 버퍼의 해상도에 의해 결정된다. 그러나 2x2픽셀 블록당 1개의 포인트만 그리고 싶으므로 해상도를 반으로 나눈다.
+___
+다음은 셰이더 파라미터 셋업이다:
+```cpp
+[...]
+
+        // Setup shader
+		FCustomLensFlarePassParameters* PassParameters = GraphBuilder.AllocParameters<FCustomLensFlarePassParameters>();
+		PassParameters->InputTexture = InputTexture;
+		PassParameters->RenderTargets[0] = FRenderTargetBinding(GlareTexture, ERenderTargetLoadAction::EClear);
+		
+		// Vertex shader
+		FLensFlareGlareVS::FParameters VertexParameters;
+		VertexParameters.Pass = *PassParameters;
+		VertexParameters.InputSampler = BilinearBorderSampler;
+		VertexParameters.TileCount = TileCount;
+		VertexParameters.PixelSize = PixelSize;
+		VertexParameters.BufferSize = BufferSize;
+		
+		// Geometry shader
+		FLensFlareGlareGS::FParameters GeometryParameters;
+		GeometryParameters.BufferSize = BufferSize;
+		GeometryParameters.BufferRatio = BufferRatio;
+		GeometryParameters.PixelSize = PixelSize;
+		GeometryParameters.GlareIntensity = PostProcessAsset->GlareIntensity;
+		GeometryParameters.GlareTint = FVector4f(PostProcessAsset->GlareTint);
+		GeometryParameters.GlareScales[0] = PostProcessAsset->GlareScale.X;
+		GeometryParameters.GlareScales[1] = PostProcessAsset->GlareScale.Y;
+		GeometryParameters.GlareScales[2] = PostProcessAsset->GlareScale.Z;
+		GeometryParameters.GlareDivider = FMath::Max(PostProcessAsset->GlareDivider, 0.01f);
+		
+		// Pixel shader
+		FLensFlareGlarePS::FParameters PixelParameters;
+		PixelParameters.GlareSampler = BilinearClampSampler;
+		PixelParameters.GlareTexture = GWhiteTexture->TextureRHI;
+		
+		if (PostProcessAsset->GlareLineMask != nullptr)
+		{
+		    const FTextureRHIRef TextureRHI = PostProcessAsset->GlareLineMask->Resource->TextureRHI;
+		    PixelParameters.GlareTexture = TextureRHI;
+		}
+		
+		TShaderMapRef<FLensFlareGlareVS> VertexShader(View.ShaderMap);
+		TShaderMapRef<FLensFlareGlareGS> GeometryShader(View.ShaderMap);
+		TShaderMapRef<FLensFlareGlarePS> PixelShader(View.ShaderMap);
+
+[...]
+```
+여기서 유일한 특이점은 RDG버퍼가 아닌 2D Texture를 파라미터로 연결한다는 점이다.
+
+데이터 에셋의 텍스처가 invalid한 경우, `GlareTexture`는 디폴트 엔진 텍스처인 `GWhiteTexture`를 연결한다. 아닌 경우는 리소스를 그냥 할당한다. 이것은 크래쉬 없이 리소스를 변경할 수 있게 해준다.
+___
