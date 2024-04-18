@@ -2035,3 +2035,55 @@ ___
 
 데이터 에셋의 텍스처가 invalid한 경우, `GlareTexture`는 디폴트 엔진 텍스처인 `GWhiteTexture`를 연결한다. 아닌 경우는 리소스를 그냥 할당한다. 이것은 크래쉬 없이 리소스를 변경할 수 있게 해준다.
 ___
+이제 실제 렌더링 패스다.
+```cpp
+		[...]
+        // Required for Lambda capture
+        FRHIBlendState* BlendState = this->AdditiveBlendState;
+
+        GraphBuilder.AddPass(
+            RDG_EVENT_NAME("%s", *PassName),
+            PassParameters,
+            ERDGPassFlags::Raster,
+            [
+                VertexShader, VertexParameters,
+                    GeometryShader, GeometryParameters,
+                    PixelShader, PixelParameters,
+                    BlendState, Viewport4, Amount
+            ] (FRHICommandListImmediate& RHICmdList)
+            {
+                RHICmdList.SetViewport(
+                    Viewport4.Min.X, Viewport4.Min.Y, 0.0f,
+                    Viewport4.Max.X, Viewport4.Max.Y, 1.0f
+                );
+
+                FGraphicsPipelineStateInitializer GraphicsPSOInit;
+                RHICmdList.ApplyCachedRenderTargets(GraphicsPSOInit);
+                GraphicsPSOInit.BlendState = BlendState;
+                GraphicsPSOInit.RasterizerState = TStaticRasterizerState<>::GetRHI();
+                GraphicsPSOInit.DepthStencilState = TStaticDepthStencilState<false, CF_Always>::GetRHI();
+                GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = GEmptyVertexDeclaration.VertexDeclarationRHI;
+                GraphicsPSOInit.BoundShaderState.VertexShaderRHI = VertexShader.GetVertexShader();
+                GraphicsPSOInit.BoundShaderState.GeometryShaderRHI = GeometryShader.GetGeometryShader();
+                GraphicsPSOInit.BoundShaderState.PixelShaderRHI = PixelShader.GetPixelShader();
+                GraphicsPSOInit.PrimitiveType = PT_PointList;
+                SetGraphicsPipelineState(RHICmdList, GraphicsPSOInit);
+
+                SetShaderParameters(RHICmdList, VertexShader, VertexShader.GetVertexShader(), VertexParameters);
+                SetShaderParameters(RHICmdList, GeometryShader, GeometryShader.GetGeometryShader(), GeometryParameters);
+                SetShaderParameters(RHICmdList, PixelShader, PixelShader.GetPixelShader(), PixelParameters);
+
+                RHICmdList.SetStreamSource(0, nullptr, 0);
+                RHICmdList.DrawPrimitive(0, 1, Amount);
+            });
+
+        OutputTexture = GlareTexture;
+
+    } // End of if()
+
+    return OutputTexture;
+
+} // End of RenderGlare()
+```
+여기서 중요한 점은
+- AddPass()가 람다로 셋업하기 때문에, 람다에서 캡처가 가능하도록 `BlendState`변수를 사용해야 한다.
