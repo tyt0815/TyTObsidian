@@ -1892,7 +1892,7 @@ ___
 	        SHADER_PARAMETER(float, GlareIntensity)
 	        SHADER_PARAMETER(float, GlareDivider)
 	        SHADER_PARAMETER(FVector4f, GlareTint)
-	        SHADER_PARAMETER_ARRAY(float, GlareScales, [3])
+	        SHADER_PARAMETER_SCALAR_ARRAY(float, GlareScales, [3])
 	    END_SHADER_PARAMETER_STRUCT()
 	};
 	class FLensFlareGlarePS : public FGlobalShader
@@ -2009,9 +2009,9 @@ ___
 		GeometryParameters.PixelSize = PixelSize;
 		GeometryParameters.GlareIntensity = PostProcessAsset->GlareIntensity;
 		GeometryParameters.GlareTint = FVector4f(PostProcessAsset->GlareTint);
-		GeometryParameters.GlareScales[0] = PostProcessAsset->GlareScale.X;
-		GeometryParameters.GlareScales[1] = PostProcessAsset->GlareScale.Y;
-		GeometryParameters.GlareScales[2] = PostProcessAsset->GlareScale.Z;
+		GET_SCALAR_ARRAY_ELEMENT(GeometryParameters.GlareScales, 0) = PostProcessAsset->GlareScale.X;
+		GET_SCALAR_ARRAY_ELEMENT(GeometryParameters.GlareScales, 1) = PostProcessAsset->GlareScale.Y;
+		GET_SCALAR_ARRAY_ELEMENT(GeometryParameters.GlareScales, 2) = PostProcessAsset->GlareScale.Z;
 		GeometryParameters.GlareDivider = FMath::Max(PostProcessAsset->GlareDivider, 0.01f);
 		
 		// Pixel shader
@@ -2087,3 +2087,517 @@ ___
 ```
 여기서 중요한 점은
 - AddPass()가 람다로 셋업하기 때문에, 람다에서 캡처가 가능하도록 `BlendState`변수를 사용해야 한다.
+- 이번에는 삼각형이 아닌 점을 그리기 때문에 `PrimitiveType`을 `PT_PointList`로 설정한다. `DrawPrimitive()`에서는 한 번에 하나의 정점만 그려야 함을 명시한다.(두 번째 인자.)
+- 지오메트리 셰이더는 버텍스 및 픽셀 셰이더와 마찬가지로 `FGraphicsPipelineStateInitializer`의 `GeometryShaderRHI` 멤버 변수를 통해 참조된다. 또한 해당 셰이더에 대한 매개 변수 설정도 호출된다.
+___
+셰이더 파일로 간다. **Glare.usf**에서 각각의 셰이더 타입에 대한 함수를 작성한다. 자세한 내용은 주석을 참고하자.
+**버텍스 셰이더**
+```hlsl
+#include "Shared.ush"
+
+uint2 TileCount;
+float GlareIntensity;
+DECLARE_SCALAR_ARRAY(float, GlareScales, 3);
+float4 GlareTint;
+float2 BufferSize;
+float4 PixelSize;
+float2 BufferRatio;
+float GlareDivider;
+SamplerState GlareSampler;
+Texture2D GlareTexture;
+
+// This struct is used to pass information from the
+// Vertex shader to the Geometry shader.
+struct FVertexToGeometry
+{
+    float4 Position : SV_POSITION;
+    float3 Color    : TEXCOORD0;
+    float Luminance : TEXCOORD1;
+    uint ID         : TEXCOORD2;
+};
+
+void GlareVS(
+    uint VId : SV_VertexID,
+    uint IId : SV_InstanceID,
+    out FVertexToGeometry Output
+)
+{
+    // TilePos is the position of the point based on its ID. 
+    // Since we know how many points will be drawn in total 
+    // (because its defined from the code), we can figure out 
+    // how many points will be draw per line and therefor their 
+    // coordinates. From this we can compute the UV coordinate 
+    // of the point.
+    float2 TilePos = float2( IId % TileCount.x, IId / TileCount.x );
+    float2 UV = TilePos / BufferSize * 2.0f;
+
+    // Coords and Weights are local positions and intensities for 
+    // the pixels we are gonna sample. Since we have one point 
+    // for four pixels (two by two) we want to sample multiple 
+    // times the buffer to avoid missing information which 
+    // would create holes or artifacts.
+    // This pattern doesn't sample exactly the 4 pixels in a block
+    // but instead sample in the middle and at the corners to take
+    // advantage of bilinear sampling to average more values.
+    const float2 Coords[5] = {
+        float2( -1.0f,  1.0f ),
+        float2(  1.0f,  1.0f ),
+
+        float2(  0.0f,  0.0f ),
+
+        float2( -1.0f, -1.0f ),
+        float2(  1.0f, -1.0f )
+    };
+
+    const float Weights[5] = {
+        0.175, 0.175,
+            0.3,
+        0.175, 0.175
+    };
+
+    // Since the UV coordinate is the middle position of the top right
+    // pixel in the 2x2 block, we offset it to get the middle of the block.
+    // Then in the loop we use the local offsets to go sample neighbor pixels.
+    float2 CenterUV = UV + PixelSize.xy * float2( -0.5f, -0.5f );
+
+    float3 Color = float3(0.0f,0.0f,0.0f);
+
+    UNROLL
+    for( int i = 0; i < 5; i++ )
+    {
+        float2 CurrentUV = CenterUV + Coords[i] * PixelSize.xy * 1.5f;
+        Color += Weights[i] * Texture2DSampleLevel(InputTexture, InputSampler, CurrentUV, 0).rgb;
+    }
+
+    Output.Luminance = dot( Color.rgb, 1.0f );
+    Output.ID       = IId;
+    Output.Color    = Color;
+    Output.Position = float4( TilePos.x, TilePos.y, 0, 1 );
+}
+
+[...]
+```
+
+**지오메트리 셰이더**
+```hlsl
+[...]
+
+// Same as with the Vertex shader, this struct is used to
+// pass information computed by the Geometry shader into
+// the Fragment/Pixel shader.
+struct FGeometryToPixel
+{
+    float4 Position : SV_POSITION;
+    float2 UV : TEXCOORD0;
+    float3 Color : TEXCOORD1;
+};
+
+// This function goal is to figure out the actual position
+// (in range 0-1) of a given vertex based on the original
+// point position. This function also take into account
+// the angle and scale of the quad to compute the target
+// position of the final vertex.
+float4 ComputePosition( float2 TilePos, float2 UV, float2 Scale, float Angle )
+{
+    // Compute the position of the quad based on the ID
+    // Some multiply/divide by two magic to get the proper coordinates
+    float2 BufferPosition = (TilePos - float2(0.25f, 0.25f)) / BufferSize;
+    BufferPosition = 4.0f * BufferPosition - 1.0f;
+
+    // Center the quad in the middle of the screen
+    float2 NewPosition = 2.0f * (UV - 0.5f);
+
+    // Scale the quad
+    NewPosition *= Scale;
+
+    // Rotate th equad
+    float Sinus         = sin( Angle );
+    float Cosinus       = cos( Angle );
+    float2 RotatedPosition = float2(
+        (NewPosition.x * Cosinus) - (NewPosition.y * Sinus),
+        (NewPosition.x * Sinus)   + (NewPosition.y * Cosinus)
+    );
+
+    // Scale quad to compensate the buffer ratio
+    RotatedPosition *= BufferRatio;
+
+    // Position quad where pixel is in the buffer
+    RotatedPosition += BufferPosition * float2(1.0f, -1.0f);
+
+    // Build final vertex position
+    float4 OutPosition = float4( RotatedPosition.x, RotatedPosition.y,0,1);
+
+    return OutPosition;
+}
+
+// This is the main function and maxvertexcount is a required keyword 
+// to indicate how many vertices the Geometry shader will produce.
+// (12 vertices = 3 quads, 4 vertices per quad)
+[maxvertexcount(12)]
+void GlareGS(
+    point FVertexToGeometry Inputs[1],
+    inout TriangleStream<FGeometryToPixel> OutStream
+)
+{
+    // It's (apparently) not possible to access to
+    // the FVertexToGeometry struct members directly,
+    // so it needs to be put into an intermediate
+    // variable like this.
+    FVertexToGeometry Input = Inputs[0];
+
+    if( Input.Luminance > 0.1f )
+    {
+        float2 PointUV = Input.Position.xy / BufferSize * 2.0f;
+        float MaxSize = max( BufferSize.x, BufferSize.y );
+
+        // Final quad color
+        float3 Color = Input.Color * GlareTint.rgb * GlareTint.a * GlareIntensity;
+
+        // Compute the scale of the glare quad.
+        // The divider is used to specify the referential point of
+        // which light is bright or not and normalize the result.
+        float LuminanceScale = saturate( Input.Luminance / GlareDivider );
+
+        // Screen space mask to make the glare shrink at screen borders
+        float Mask = distance( PointUV - 0.5f, float2(0.0f, 0.0f) );
+        Mask = 1.0f - saturate( Mask * 2.0f );
+        Mask = Mask * 0.6f + 0.4f;
+
+        float2 Scale = float2(
+            LuminanceScale * Mask,
+            (1.0f / min( BufferSize.x, BufferSize.y )) * 4.0f
+        );
+
+        // Setup rotation angle
+        const float Angle30 = 0.523599f;
+        const float Angle60 = 1.047197f;
+        const float Angle90 = 1.570796f;
+        const float Angle150 = 2.617994f;
+
+        // Additional rotation based on screen position to add 
+        // more variety and make the glare rotate with the camera.
+        float AngleOffset = (PointUV.x * 2.0f - 1.0f) * Angle30;
+
+        float AngleBase[3] = {
+            AngleOffset + Angle90,
+            AngleOffset + Angle30, // 90 - 60
+            AngleOffset + Angle150 // 90 + 60
+        };
+
+        // Quad UV coordinates of each vertex
+        // Used as well to know which vertex of the quad is
+        // being computed (by its position).
+        // The order is important to ensure the triangles
+        // will be front facing and therefore visible.
+        const float2 QuadCoords[4] = {
+            float2(  0.0f,  0.0f ),
+            float2(  1.0f,  0.0f ),
+            float2(  1.0f,  1.0f ),
+            float2(  0.0f,  1.0f )
+        };
+
+        // Generate 3 quads
+        for( int i = 0; i < 3; i++ )
+        {
+            // Emit a quad by producing 4 vertices
+            if( GlareScales[i] > 0.0001f )
+            {
+                float2 QuadScale = Scale * GlareScales[i];
+                float QuadAngle = AngleBase[i];
+
+                FGeometryToPixel Vertex0;
+                FGeometryToPixel Vertex1;
+                FGeometryToPixel Vertex2;
+                FGeometryToPixel Vertex3;
+
+                Vertex0.UV = QuadCoords[0];
+                Vertex1.UV = QuadCoords[1];
+                Vertex2.UV = QuadCoords[2];
+                Vertex3.UV = QuadCoords[3];
+
+                Vertex0.Color = Color;
+                Vertex1.Color = Color;
+                Vertex2.Color = Color;
+                Vertex3.Color = Color;
+
+                Vertex0.Position = ComputePosition( Input.Position.xy, Vertex0.UV, QuadScale, QuadAngle );
+                Vertex1.Position = ComputePosition( Input.Position.xy, Vertex1.UV, QuadScale, QuadAngle );
+                Vertex2.Position = ComputePosition( Input.Position.xy, Vertex2.UV, QuadScale, QuadAngle );
+                Vertex3.Position = ComputePosition( Input.Position.xy, Vertex3.UV, QuadScale, QuadAngle );
+
+                // Produce a strip of Polygon. A triangle is
+                // just 3 vertex produced in a row which end-up
+                // connected, the last vertex re-use two previous
+                // ones to build the second triangle.
+                // This is why Vertex3 is not the last one, to ensure
+                // the triangle is built with the right points.
+                OutStream.Append(Vertex0);
+                OutStream.Append(Vertex1);
+                OutStream.Append(Vertex3);
+                OutStream.Append(Vertex2);
+
+                // Finish the strip and end the primitive generation
+                OutStream.RestartStrip();
+            }
+        }
+    }
+}
+
+[...]
+```
+
+**픽셀 셰이더**
+```hlsl
+[...]
+
+void GlarePS(
+    FGeometryToPixel Input,
+    out float3 OutColor : SV_Target0 )
+{
+    float3 Mask = Texture2DSampleLevel(GlareTexture, GlareSampler, Input.UV, 0).rgb;
+    OutColor.rgb = Mask * Input.Color.rgb;
+}
+```
+___
+# 14. Final Mixing Pass
+
+모든 렌더 패스가 끝났고 이것들을 블룸과 함께 결합해야한다. 셰이더부터 빌드한다.
+
+**TODO_SHADER_MIX**
+```cpp
+	// Final bloom mix shader
+	class FLensFlareBloomMixPS : public FGlobalShader
+	{
+	public:
+	    DECLARE_GLOBAL_SHADER(FLensFlareBloomMixPS);
+	    SHADER_USE_PARAMETER_STRUCT(FLensFlareBloomMixPS, FGlobalShader);
+	
+	    BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+	        SHADER_PARAMETER_STRUCT_INCLUDE(FCustomLensFlarePassParameters, Pass)
+	        SHADER_PARAMETER_SAMPLER(SamplerState, InputSampler)
+	        SHADER_PARAMETER_RDG_TEXTURE(Texture2D, BloomTexture)
+	        SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GlareTexture)
+	        SHADER_PARAMETER_TEXTURE(Texture2D, GradientTexture)
+	        SHADER_PARAMETER_SAMPLER(SamplerState, GradientSampler)
+	        SHADER_PARAMETER(FVector4f, Tint)
+	        SHADER_PARAMETER(FVector2f, InputViewportSize)
+	        SHADER_PARAMETER(FVector2f, BufferSize)
+	        SHADER_PARAMETER(FVector2f, PixelSize)
+	        SHADER_PARAMETER(FIntVector, MixPass)
+	        SHADER_PARAMETER(float, Intensity)
+	        END_SHADER_PARAMETER_STRUCT()
+	
+	        static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+	    {
+	        return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+	    }
+	};
+	IMPLEMENT_GLOBAL_SHADER(FLensFlareBloomMixPS, "/CustomShaders/Mix.usf", "MixPS", SF_Pixel);
+```
+___
+**Mix.usf**
+```hlsl
+#include "Shared.ush"
+
+Texture2D BloomTexture;
+Texture2D GlareTexture;
+Texture2D GradientTexture;
+SamplerState GradientSampler;
+
+float Intensity;
+float4 Tint;
+float2 BufferSize;
+float2 PixelSize;
+int3 MixPass;
+
+void MixPS(
+    in noperspective float4 UVAndScreenPos : TEXCOORD0,
+    out float4 OutColor : SV_Target0 )
+{
+    float2 UV = UVAndScreenPos.xy;
+    OutColor.rgb = float3( 0.0f, 0.0f, 0.0f );
+    OutColor.a = 0;
+
+    //---------------------------------------
+    // Add Bloom
+    //---------------------------------------
+    if( MixPass.x )
+    {
+        OutColor.rgb += Texture2DSample( BloomTexture, InputSampler, UV * InputViewportSize ).rgb;
+    }
+
+    //---------------------------------------
+    // Add Flares, Glares mixed with Tint/Gradient
+    //---------------------------------------
+    float3 Flares = float3( 0.0f, 0.0f, 0.0f );
+
+    // Flares
+    if( MixPass.y )
+    {
+        Flares += Texture2DSample( InputTexture, InputSampler, UV ).rgb;
+    }
+
+    // Glares
+    // Do 4 samples in a square pattern to smooth the
+    // glare pass result and hide a few artifacts.
+    if( MixPass.z )
+    {
+        const float2 Coords[4] = {
+            float2(-1.0f, 1.0f),
+            float2( 1.0f, 1.0f),
+            float2(-1.0f,-1.0f),
+            float2( 1.0f,-1.0f)
+        };
+
+        float3 GlareColor = float3( 0.0f, 0.0f, 0.0f );
+
+        UNROLL
+        for( int i = 0; i < 4; i++ )
+        {
+            float2 OffsetUV = UV + PixelSize * Coords[i];
+            GlareColor.rgb += 0.25f * Texture2DSample( GlareTexture, InputSampler, OffsetUV ).rgb;
+        }
+
+        Flares += GlareColor;
+    }
+
+    const float2 Center = float2( 0.5f, 0.5f );
+    float2 GradientUV = float2(
+        saturate( distance(UV, Center) * 2.0f ),
+        0.0f
+    );
+    float3 Gradient = Texture2DSample( GradientTexture, GradientSampler, GradientUV ).rgb;
+
+    // Final mix
+    OutColor.rgb += Flares * Gradient * Tint.rgb * Intensity;
+}
+```
+
+여기서 간단히 블룸, 고스트, 글레어를 합친다. 최종적인 외관은 스크린 스페이스에서 1D gradient texture로 색조가 추가되어 전반적인 색조를 더한다.
+
+일부 패스가 invalid할 수 있기 때문에, `if()`안에 설정되어 있다. `MixPass`가 코드에서 설정된 부울로 작동해(아래참조) 패스가 실행되는 지 여부를 결정한다.
+
+글레어가 4개의 샘플로 읽히는 것을 볼 수 있는데, 이는 일부 엘리어싱을 숨기고 외관을 부드럽게 만들기 위한 것이다. 한번도 이중선형보간을 활용하는 것이다.
+![[Pasted image 20240418174328.png]]
+(1sample vs 4 samples at corners)
+___
+이제 `RenderLensFlare()`로 돌아가 마무리하자.
+
+**TODO_MIX**
+```cpp
+[...]
+{
+    const FString PassName("LensFlareMix");
+
+    FIntRect MixViewport = FIntRect(
+        0,
+        0,
+        View.ViewRect.Width() / 2,
+        View.ViewRect.Height() / 2
+    );
+
+    FVector2f BufferSize = FVector2f(MixViewport.Width(), MixViewport.Height());
+
+    // Create buffer
+    FRDGTextureDesc Description = Inputs.Bloom.Texture->Desc;
+    Description.Reset();
+    Description.Extent = MixViewport.Size();
+    Description.Format = PF_FloatRGBA;
+    Description.ClearValue = FClearValueBinding(FLinearColor::Transparent);
+    FRDGTextureRef MixTexture = GraphBuilder.CreateTexture(Description, *PassName);
+
+    // Shader parameters
+    TShaderMapRef<FCustomScreenPassVS> VertexShader(View.ShaderMap);
+    TShaderMapRef<FLensFlareBloomMixPS> PixelShader(View.ShaderMap);
+
+    FLensFlareBloomMixPS::FParameters* PassParameters = GraphBuilder.AllocParameters<FLensFlareBloomMixPS::FParameters>();
+    PassParameters->Pass.RenderTargets[0] = FRenderTargetBinding(MixTexture, ERenderTargetLoadAction::ENoAction);
+    PassParameters->InputSampler = BilinearClampSampler;
+    PassParameters->GradientTexture = GWhiteTexture->TextureRHI;
+    PassParameters->GradientSampler = BilinearClampSampler;
+    PassParameters->BufferSize = BufferSize;
+    PassParameters->PixelSize = FVector2f(1.0f, 1.0f) / BufferSize;
+    PassParameters->InputViewportSize = FVector2f(BloomInputViewportSize);
+    PassParameters->Tint = FVector4f(PostProcessAsset->Tint);
+    PassParameters->Intensity = PostProcessAsset->Intensity;
+
+    if (PostProcessAsset->Gradient != nullptr)
+    {
+        const FTextureRHIRef TextureRHI = PostProcessAsset->Gradient->Resource->TextureRHI;
+        PassParameters->GradientTexture = TextureRHI;
+    }
+[...]
+```
+특별한 부분은 없다.
+
+```cpp
+	[...]
+	// Plug in buffers
+        const int32 MixBloomPass = CVarLensFlareRenderBloom.GetValueOnRenderThread();
+
+        PassParameters->MixPass = FIntVector(
+            (Inputs.bCompositeWithBloom && MixBloomPass),
+            (FlareTexture != nullptr),
+            (GlareTexture != nullptr)
+        );
+
+        if( Inputs.bCompositeWithBloom && MixBloomPass )
+        {
+            PassParameters->BloomTexture = Inputs.Bloom.Texture;
+        }
+        else
+        {
+            PassParameters->BloomTexture = InputTexture;
+        }
+
+        if( FlareTexture != nullptr )
+        {
+            PassParameters->Pass.InputTexture = FlareTexture;
+        }
+        else
+        {
+            PassParameters->Pass.InputTexture = InputTexture;
+        }
+
+        if( GlareTexture != nullptr )
+        {
+            PassParameters->GlareTexture = GlareTexture;
+        }
+        else
+        {
+            PassParameters->GlareTexture = InputTexture;
+        }
+    [...]
+```
+이 부분은 셰이더 파라미터에 연결된 버퍼가 유효한지 확인하는데 중점을 둔다. nullptr은 허용되지 않으므로, 세이더에서 샘플링할 때 버퍼가 유효한지 여부를 알기 위해 IntVector를 boolean그룹으로 설정했다.
+
+이 부분을 모두 if/else를 제거해 최적화가 가능하지만 cvar로 일부 효과를 토글하는 기능을 사용할 수 없다. 원하는 대로 적절히 조정하자.
+___
+마지막 코드
+```cpp
+[...]
+// Render
+        DrawShaderPass(
+            GraphBuilder,
+            PassName,
+            PassParameters,
+            VertexShader,
+            PixelShader,
+            ClearBlendState,
+            MixViewport
+        );
+
+        OutputTexture = MixTexture;
+        OutputRect = MixViewport;
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // Final Output
+    ////////////////////////////////////////////////////////////////////////
+    Outputs.Texture = OutputTexture;
+    Outputs.Rect    = OutputRect;
+
+} // end of RenderLensFlare()
+```
+마지막 렌더링을 끝내고, Output struct에 할당해 준다. 이제 결과물을 확인해 본다.
+___
