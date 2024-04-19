@@ -2,7 +2,11 @@
 [참조](https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/)
 ![[프로젝트 환경]]
 - 기존 렌즈 플레어
-![[Pasted image 20240404162820.png]]
+![[Pasted image 20240419101254.png]]
+![[Pasted image 20240419101118.png]]
+- 커스텀 렌즈 플레어
+![[Pasted image 20240419101312.png]]
+![[Pasted image 20240419101107.png]]
 
 
 # Overview of the Custom Lens Flare Pass
