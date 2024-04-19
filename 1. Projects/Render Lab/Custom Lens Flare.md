@@ -6,7 +6,9 @@
 ![[Pasted image 20240419101118.png]]
 - 커스텀 렌즈 플레어
 ![[Pasted image 20240419101312.png]]
+![[Pasted image 20240419102218.png]]
 ![[Pasted image 20240419101107.png]]
+![[Pasted image 20240419101948.png]]
 
 
 # Overview of the Custom Lens Flare Pass
