@@ -1,10 +1,10 @@
-==아래 사이트의 글을 번역및 엔진 버전에 맞게 수정되었음.==
-[참조](https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/)
-![[프로젝트 환경]]
-- 기존 렌즈 플레어
+**아래 사이트의 글을 번역및 엔진 버전에 맞게 수정되었음.**
+- [참조](https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/)
+
+**기존 렌즈 플레어**
 ![[Pasted image 20240419101254.png]]
 ![[Pasted image 20240419101118.png]]
-- 커스텀 렌즈 플레어
+**커스텀 렌즈 플레어**
 ![[Pasted image 20240419101312.png]]
 ![[Pasted image 20240419102218.png]]
 ![[Pasted image 20240419101107.png]]

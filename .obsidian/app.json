@@ -3,5 +3,6 @@
   "newFileLocation": "current",
   "livePreview": true,
   "attachmentFolderPath": "./Attachments",
-  "alwaysUpdateLinks": true
+  "alwaysUpdateLinks": true,
+  "newLinkFormat": "relative"
 }
