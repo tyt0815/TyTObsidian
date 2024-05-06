@@ -23,8 +23,8 @@
 
 # Fly 마법진
 - [x] Fly 마법진 구현 ✅ 2024-01-20
-![[Drawing 2024-01-16 17.15.21.excalidraw]]
-![[Drawing 2024-01-16 17.19.23.excalidraw]]
+![[Attachments/Pasted image 20240506123850.png]]
+![[Attachments/Pasted image 20240506123914.png]]
 포탈 마법을 사용할때 사용할 마법진
 # Floor 마법진
 - [x] Floor 마법진 구현 ✅ 2024-01-20
