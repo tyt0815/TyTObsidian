@@ -50,6 +50,6 @@ Bucket과 Slot으로 구성
 slot이 여러개 일 수 있기 때문에 1대1함수는 아님.
 # 2. 컴퓨터 구조
 ## 2.1. 레지스터와 메모리
-![[Pasted image 20231030172144.png]]
+![[Attachments/Pasted image 20231030172144.png]]
 ## 2.2. 숫자
 2의 보수

@@ -2,20 +2,20 @@
 - [참조](https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/)
 
 **기존 렌즈 플레어**
-![[Pasted image 20240419101254.png]]
-![[Pasted image 20240419101118.png]]
+![[Attachments/Pasted image 20240419101254.png]]
+![[Attachments/Pasted image 20240419101118.png]]
 **커스텀 렌즈 플레어**
-![[Pasted image 20240419101312.png]]
-![[Pasted image 20240419102218.png]]
-![[Pasted image 20240419101107.png]]
-![[Pasted image 20240419101948.png]]
+![[Attachments/Pasted image 20240419101312.png]]
+![[Attachments/Pasted image 20240419102218.png]]
+![[Attachments/Pasted image 20240419101107.png]]
+![[Attachments/Pasted image 20240419101948.png]]
 
 
 # Overview of the Custom Lens Flare Pass
-![[Pasted image 20240415191738.png]]
+![[Attachments/Pasted image 20240415191738.png]]
 # 1. Setting Up a Plugin
 새 플러그인을 만들어 준다. 다른 설정은 마음대로 해되, Is Engine Plugin은 체크해제 하도록 하자.
-![[Pasted image 20240409122416.png]]
+![[Attachments/Pasted image 20240409122416.png]]
 여기서 부터 플러그인의 이름을 **CustomPostProcess**로 하여 글을 진행한다.
 
 생성한 플러그인의 **Bulid.cs**파일(위 사진대로면 **CustomPostProcess.Build.cs**)에 아래 include를 추가해 준다.
@@ -65,7 +65,7 @@ void FCustomPostProcessModule::StartupModule()
 
 # 2. Prepping Shaders
 플러그인 루트폴더에 **Shaders**폴더를 새로 만들어 준다.
-![[Pasted image 20240409124620.png]]
+![[Attachments/Pasted image 20240409124620.png]]
 
 렌더링 패스로 통과시킬 커스텀 셰이더파일들을 저장할 폴더다. 아래 파일들을 생성해 준다.
 **.USF**
@@ -212,9 +212,9 @@ public:
 
 ```
 에디터에서, 데이터 에셋을 만들어 주자.
-![[Pasted image 20240417161956.png]]
+![[Attachments/Pasted image 20240417161956.png]]
 그리고 후에 설정하게 될 에셋 패스는 아래와 같이 **Copy Reference**를 활용해서 하면 된다.
-![[Pasted image 20240417162035.png]]
+![[Attachments/Pasted image 20240417162035.png]]
 
 # 4. 엔진 렌더링 패스 수정
 **PostProcessLensFlares.h**파일에서, `struct FLensFlareInputs`에 새로운 파라미터를 추가해 준다. 이 구조체는 포스트 프로세스 렌더링 단계에서 렌더링 패스 자체로 몇 가지 설정을 전송하는데 사용된다.
@@ -997,7 +997,7 @@ ___
 ___
 # 10. Downsample and Threshold Pass
 다운 샘플링과 약간의 블러 패스는 에일리어싱을 해결해 준다.
-![[Pasted image 20240415192100.png]]
+![[Attachments/Pasted image 20240415192100.png]]
 (**No custom filtering** vs **Downsampling** vs **Downsampling+Blur**, gif로 보면 확실히 티가난다.)
 
 모든 후속 효과는 임계값 패스를 기반으로 구축된다. 따라서 이 임계값 패스를 잘 구축하는 것이 중요하다.
@@ -1006,7 +1006,7 @@ ___
 이전 **Activision**의 **Call of Duty: Advanced Warfare**에서 비슷한 문제를 겪은 블룸 생성에 대한 발표가 있었다.
 
 그들은 블룸을 원래 입력 버퍼를 여러 번 축소하여 생성한다. 어느 순간 픽셀정보가 맞거나 틀린다. 그래서 카메라를 움직일 때 엘리어싱 문제로 깜박임이 발생한다. 그들의 해결책은 이동 중에도 최종 값을 안정화하기 위해 이웃 픽셀을 특정 가중치로 평균화하는 것이었다.
-![[Pasted image 20240415191326.png]]
+![[Attachments/Pasted image 20240415191326.png]]
 ___
 이제 위 방식을 기반으로 하는 다운샘플 패스를 만들어 보자
 
@@ -1190,7 +1190,7 @@ ___
 최종적으론, **Dual Kawase**를 사용했는데, 기존 Kawase 방식의 향상된 버전으로 빠른 컴퓨팅속도로 가우시안 블러를 모방하는 방식이다. 이름은 GDC에서 발표를 했었던 **Masaki Kawase**의 이름에서 따왔다.
 
 블러의 방법은 간단히 말하자면 각각의 픽셀이 이웃을 샘플링 하는 패스를 여러번 하는 것이다. 따라서 블러의 강도는 패스가 수행되는 수에 따라 결정된다.
-![[Pasted image 20240416175428.png]]
+![[Attachments/Pasted image 20240416175428.png]]
 
 듀얼 버전은 GPU의 이중선형 샘플링의 이점을 활용한다. 같은 사이즈의 버퍼를 사용하는 게 아닌, 각각의 패스는 이전 결과의 다운샘플링이다.그리고 중간에 업샘플링 패스를 통과한다. 다운과 업 과정은 이중선형보간의 이점을 가져가게 된다.
 이것이 의미하는 것은 필요한 총 패스 수를 줄이고 더 낮은 해상도를 처리함으로 필레이트를 향상시킬 수 있다.
@@ -1613,13 +1613,13 @@ void GhostsPS(
 ==기존 작성자와 다른 점으로, 엔전의 버전이 업데이트 되면서 생긴 문제인진 모르겠지만 float형 배열을 선언할때는 `DECLARE_SCALAR_ARRAY()`를 사용하고, 사용할 때에도 `GET_SCALAR_ARRAY_ELEMENT()` 를 사용해 주어야 한다. C++코드에서 바인딩할 구조체를 만들대도 마찬가지로 `SHADER_PARAMETER_SCALAR_ARRAY()`를 사용한 모습을 볼 수 있다. 후에 나올 C++렌더링 코드에서도 `GET_SCALAR_ARRAY_ELEMENT()`를 사용해서 배열 요소에 접근하는 것을 확인할 수 있다.==
 
 
-![[Pasted image 20240417194532.png]]
+![[Attachments/Pasted image 20240417194532.png]]
 (No Masking at all)
-![[Pasted image 20240417194638.png]]
+![[Attachments/Pasted image 20240417194638.png]]
 (Local Masking, aplplied in the loop on each ghost)
-![[Pasted image 20240417194714.png]]
+![[Attachments/Pasted image 20240417194714.png]]
 (Masking at the borders of the screen)
-![[Pasted image 20240417194719.png]]
+![[Attachments/Pasted image 20240417194719.png]]
 (Combined with bloom)
 ___
 **TODO_FLARE_GHOSTS**
@@ -1681,13 +1681,13 @@ GET_SCALAR_ARRAY_ELEMENT(PassParameters->GhostScales, 7) = PostProcessAsset->Gho
 ___
 ## Halo Subpass
 헤일로 이펙트는 John Chapman의 아티클을 베이스로 만들어 졌다.
-![[Pasted image 20240417201331.png]]
+![[Attachments/Pasted image 20240417201331.png]]
 대략적인 아이디어는 UV좌표를 왜곡하는 방향 벡터를 만드는 것이다. 이것은 화면 중앙에 있는 밝은 빛을 화면 가장자리로 밀어준다.
 
 작성자는 UV를 어떤 것이 더 멀리 떨어지도록 왜곡하는 fish eye 이펙트로 조정했다. 이는 대부분의 경우 매우 얇은 헤일로를 얻고 이전에 추가한 고스트와의 중첩을 피하고자 했기 때문이다.
 ___
 일반 헤일로(왼쪽)와 피쉬아이 헤일로(오른쪽)
-![[Pasted image 20240417201609.png]]
+![[Attachments/Pasted image 20240417201609.png]]
 ___
 **TODO_SHADER_HALO**
 ```cpp
@@ -1824,7 +1824,7 @@ ___
 중간버퍼에 그려서 고스트 위에 복사하는 것은 의미가 없다. 따라서 기존 콘텐츠 위에 그냥 덮어 씌우는 것이 더 빠르고 저렴하다. 추가 모드로 설정되어 있고, 렌즈 플레어는 조명 정보이므로 이 방법이 잘 작동한다.
 ___
 아직 문제가 있는데 가끔 아티팩트나 엘리어싱이 눈에 띈다.
-![[Pasted image 20240417204210.png]]
+![[Attachments/Pasted image 20240417204210.png]]
 이러한 문제를 해결하기 위해 여러가지 시도를 해보았지만, 단순히 블러링 하는 것이 가장 효과적이었다. 고스트와 결합된 헤일로를 같이 블러링하는 것 또한 하나의 어드벤티지다.
 
 따라서, 마지막에 단순히 블러 함수를 호출해 주기만 하면 된다.
@@ -1847,13 +1847,13 @@ ___
 # 13. Glare Pass
 이 패스는 배트맨에서 영감을 많이 받았다고 한다.
 ==빛을 생성하기 위한 또 다른 방법은 입력 버퍼에서 여러 방향으로 블러를 수행하고 이를 결합하여 이러한 빛 줄기를 만드는 것이다.이는 [마사키 카와세가 이 발표](https://genderi.org/frame-buffer-postprocessing-effects-in-double-s-t-e-a-l-wreckl.html)에서 시연한 대로다.
-![[Pasted image 20240418153554.png]]
+![[Attachments/Pasted image 20240418153554.png]]
 이 방법을 선택하지 않은 이유는 색상, 크기를 제어하기가 더 어렵고 많은 패스가 필요하며, 프로세스의 본질상 작은 세부 사항이 쉽게 손실될 수 있기 때문이다.==
 
 작성자가 새롭게 테스트한 길은 보다 성능이 좋고 멋진 것을 찾는 것이 어려웠다. 처음에는 Unreal Bokeh블러와 같은 아이디어로 버전을 만들었다: 각 픽셀마다 인스턴스화 되고 늘어난 사각형을 그려 별 모양을 만들었다. 각 필셀당 하나의 사각형만 그려지기 때문에 최소한 3개의 사각형이 필요하며, 교차점마다 6개의 가지가 생성된다. 이는 2x2블록으로 픽셀을 그룹화하고 각 블록마다 3개의 사각형이 할당되도록 구현되었다. 이 아이디어가 동작할 수 있다는 것을 입증했지만 여전히 성능이 좋지 않았다. GPU에서 사각형이 발산되는 방식에는 일정한 비용이 발생하는데, 아무 것도 그려지지 않을 때에도 높은 고정 비용이 발생했다.(또한 유사한 아이디어가 과거에 시도되었음을 알게 되었다.)
 ___
 그래서 작성자는 프로세스를 분리하는 방식으로 접근해 보았다.
-![[Pasted image 20240418154208.png]]
+![[Attachments/Pasted image 20240418154208.png]]
 (이 도식에서 픽셀 셰이더가 가독성을 위해 지오메트리 셰이더와 결합되었음.)
 
 직접적으로 사각형을 렌더링하는 대신 포인트를 사용한다.(하나당 네개의 픽셀 그룹)
@@ -1862,7 +1862,7 @@ ___
 만약 어떤 포인트도 **유효**하지 않다면, 아무것도 래스터화 되지 않는다. 포인트를 발사하는 기본 비용은 매우 낮다. 모든 작업은 이제 지오메트리 셰이더 내에서 이루어지며 이를 쉽게 건너뛸 수 있다. 최종 비용은 이제 서로 겹치는 많은 사각형이 있을 때 겹침으로 인한 비용이 된다.
 
 아래는 각 포인트의 샘플링 패턴이다:
-![[Pasted image 20240418154918.png]]
+![[Attachments/Pasted image 20240418154918.png]]
 기본적으로, 2x2 픽셀 블록에 대해 중심과 각 모서리에서 정보를 읽는다. 이 때, 이중 선형 보간으로 픽셀을 읽기 때문에 많은 정보를 읽을 수 있다. 픽셀 값은 중심에서 더 큰 가중치로 계산된다.
 이 패턴은 전환 및 카메라 이동을 더 안정적으로 만드는 장점이 있다. 그렇지 않으면 Glare 효과가 Threshold 패스에서 보이는 것처럼 펄스가 나오거나 깜박일 수 있다. 여러번의 시행착오 끝에, 시각적으로 충분한 상태로 유지되면서도 저렴한(단 5회의 읽기만 필요한)이 사용자 정의 패턴을 고안했다. 더 많은 정보와 밝기를 잃지 않으면서 효과를 더 안정적으로 만드는 방법은 아직 찾이 못했다고 한다.
 
@@ -2484,7 +2484,7 @@ void MixPS(
 일부 패스가 invalid할 수 있기 때문에, `if()`안에 설정되어 있다. `MixPass`가 코드에서 설정된 부울로 작동해(아래참조) 패스가 실행되는 지 여부를 결정한다.
 
 글레어가 4개의 샘플로 읽히는 것을 볼 수 있는데, 이는 일부 엘리어싱을 숨기고 외관을 부드럽게 만들기 위한 것이다. 한번도 이중선형보간을 활용하는 것이다.
-![[Pasted image 20240418174328.png]]
+![[Attachments/Pasted image 20240418174328.png]]
 (1sample vs 4 samples at corners)
 ___
 이제 `RenderLensFlare()`로 돌아가 마무리하자.

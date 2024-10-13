@@ -3,11 +3,11 @@
 기본공격시 마법진을 생성할 위치를 계산한다.
 기본적으로 공중에 떠있는 마법진을 계산할것 이다.
 기본 아이디어는 이렇다.
-![[Pasted image 20240108221938.png]]
+![[Attachments/Pasted image 20240108221938.png]]
 사진에서 보이는 바와 같이 캐릭터가 화면정 중앙에 있지 않고 약간 비스듬하게 오른쪽 위에 위치하게 만들 것이다.
-![[Pasted image 20240108223420.png]]
+![[Attachments/Pasted image 20240108223420.png]]
 
-![[Pasted image 20240108223405.png]]
+![[Attachments/Pasted image 20240108223405.png]]
 그림을 참고하며 설명하자면
 1. 카메라의 Forward벡터를 이용하여 임시로 LookAt포인트를 잡는다.
 2. ActorLocation이 허리쯤에 있으므로 (0, 0, 1)방향(윗 방향)으로 ZOffset만큼 올려 가슴 위치까지 올린다.
@@ -15,7 +15,7 @@
 	   (LookAt - ActorLocation + (0, 0, 1) * ZOffset).Nomalize
 4. 계산한 방향으로 XOffset만큼 곱해서 가슴 위치에 더해준다.
 
-![[Pasted image 20240108224042.png]]
+![[Attachments/Pasted image 20240108224042.png]]
 위와 같이 나오게 된다.
 
 ## BugFix
