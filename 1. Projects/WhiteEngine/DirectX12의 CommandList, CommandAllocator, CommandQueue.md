@@ -7,3 +7,5 @@
 - CommandList에 명령을 저장할 공간을 할당해줌
 - 위에 언급된 바와 같이 같은 CommandList에 공간을 할당하더라도 다른 CommandAllocator가 할당되면 다른 공간에 할당됨
 # CommandQueue
+- GPU가 실행할 명령이 대기하는 대기열
+- 큐가 여러개면 GPU가 병렬로 처리한다
