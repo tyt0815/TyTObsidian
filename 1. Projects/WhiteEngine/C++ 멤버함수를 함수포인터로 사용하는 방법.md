@@ -1,4 +1,7 @@
 ```cpp
+#include <iostream>
+#include <functional>
+
 class A
 {
 public:
@@ -18,7 +21,7 @@ public:
     void BF(int a, int b)
     {
         i = a + b;
-        std::c[]()out << a + b;
+        std::cout << a + b;
     }
 };
 
