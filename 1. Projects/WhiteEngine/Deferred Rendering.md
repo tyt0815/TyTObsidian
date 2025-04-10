@@ -31,4 +31,7 @@ WorldNormal = DecodeVector(WorldNormal);
 ```
 ![[Attachments/Pasted image 20250410115647.png]]
 ## 줄무늬 현상?
-위 사진에서는 잘 안보이겠지만 
+위 사진에서는 잘 안보이겠지만 포워드 셰이딩때와는 달리 특히 스펙큘라 반사부분에 줄무늬 현상이 나타난다.
+![[Attachments/Pasted image 20250410122213.png]]
+
+이는 아마도 R8G8B8A8_UNORM포맷의 정밀도 문제인 것으로 추정된다. R16G16B16A16_FLOAT같은 포맷으로 변경해 보자.
