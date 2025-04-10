@@ -35,3 +35,5 @@ WorldNormal = DecodeVector(WorldNormal);
 ![[Attachments/Pasted image 20250410122213.png]]
 
 이는 아마도 R8G8B8A8_UNORM포맷의 정밀도 문제인 것으로 추정된다. R16G16B16A16_FLOAT같은 포맷으로 변경해 보자.
+![[Attachments/Pasted image 20250410135912.png]]
+변경항 후에는 확실히 없어진 모습을 확인할 수 있다.
