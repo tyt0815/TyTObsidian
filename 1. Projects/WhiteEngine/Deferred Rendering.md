@@ -29,5 +29,6 @@ GBufferA = float4(EncodedNormalW, 1.0f);
 float3 WorldNormal = gTexture[gGBufferATextureIndex].Sample(gsamLinearWrap, TexC).rgb;
 WorldNormal = DecodeVector(WorldNormal);
 ```
-
-## 
+![[Attachments/Pasted image 20250410115647.png]]
+## 줄무늬 현상?
+위 사진에서는 잘 안보이겠지만 
