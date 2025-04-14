@@ -5,3 +5,5 @@
 ![[Attachments/Pasted image 20250413220131.png]]
 
 해당하는 이넘값을 가져와 사용하면 된다.
+
+참고로 라인 트레이싱은 `ECollisionResponse::ECR_Block`으로 해야 인식한다.
