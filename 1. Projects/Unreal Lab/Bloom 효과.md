@@ -4,3 +4,6 @@
 3. 가우시안 블룸
    64/1 -> 1/2(BloomSetup)
 4. 적용
+
+참고
+PostProcessing.cpp, PostProcessingBloomSetup.cpp, PostProcessBloom.usf, FilterPixelShader.usf
