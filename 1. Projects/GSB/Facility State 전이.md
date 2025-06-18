@@ -12,8 +12,6 @@ Constructing ^YUI50VrA
 
 Waiting ^mjGycJYf
 
-Linked With Power Provider ^itFlLSZl
-
 Running ^e7eEc2TU
 
 Preview ^M9WBabik
@@ -24,16 +22,14 @@ Stopped ^yPnUiVMf
 
 건설 완료 ^14oxLvLw
 
-전력 공급, 생산 물품 설정,
-자원 확보등 작동 조건 만족 ^Tlp3F1Em
+Link, Register to Power Provider
+자원 Input등 작동 조건 만족 ^Tlp3F1Em
 
 작동 조건 불만족 ^s8OrwGSY
 
 전원 off ^Fkh48gyY
 
 전원 on ^qkpnpWUW
-
-Registered as Power Consumer ^zwMg0V1d
 
 %%
 # Drawing
@@ -215,8 +211,8 @@ Registered as Power Consumer ^zwMg0V1d
 		},
 		{
 			"type": "arrow",
-			"version": 781,
-			"versionNonce": 188279531,
+			"version": 786,
+			"versionNonce": 1658085483,
 			"isDeleted": false,
 			"id": "mt9exeQdQSJM_7_uq8TP1",
 			"fillStyle": "solid",
@@ -226,11 +222,11 @@ Registered as Power Consumer ^zwMg0V1d
 			"opacity": 100,
 			"angle": 0,
 			"x": -477.25,
-			"y": -147.08237290399614,
+			"y": -147.08237290399637,
 			"strokeColor": "#1e1e1e",
 			"backgroundColor": "transparent",
 			"width": 342,
-			"height": 1.286844306705973,
+			"height": 1.2868443067061435,
 			"seed": 1007675954,
 			"groupIds": [],
 			"frameId": null,
@@ -238,7 +234,7 @@ Registered as Power Consumer ^zwMg0V1d
 				"type": 2
 			},
 			"boundElements": [],
-			"updated": 1750232368006,
+			"updated": 1750236441497,
 			"link": null,
 			"locked": false,
 			"startBinding": {
@@ -261,80 +257,9 @@ Registered as Power Consumer ^zwMg0V1d
 				],
 				[
 					342,
-					1.286844306705973
+					1.2868443067061435
 				]
 			]
-		},
-		{
-			"type": "ellipse",
-			"version": 438,
-			"versionNonce": 143010373,
-			"isDeleted": false,
-			"id": "1EpkMLribc3wZpgJDXF64",
-			"fillStyle": "solid",
-			"strokeWidth": 2,
-			"strokeStyle": "solid",
-			"roughness": 1,
-			"opacity": 100,
-			"angle": 0,
-			"x": -375.25,
-			"y": -488.0859375,
-			"strokeColor": "#1e1e1e",
-			"backgroundColor": "transparent",
-			"width": 1032.125,
-			"height": 720.625,
-			"seed": 709960750,
-			"groupIds": [],
-			"frameId": null,
-			"roundness": {
-				"type": 2
-			},
-			"boundElements": [
-				{
-					"id": "mt9exeQdQSJM_7_uq8TP1",
-					"type": "arrow"
-				}
-			],
-			"updated": 1750232376890,
-			"link": null,
-			"locked": false
-		},
-		{
-			"type": "text",
-			"version": 394,
-			"versionNonce": 2098780363,
-			"isDeleted": false,
-			"id": "itFlLSZl",
-			"fillStyle": "solid",
-			"strokeWidth": 2,
-			"strokeStyle": "solid",
-			"roughness": 1,
-			"opacity": 100,
-			"angle": 0,
-			"x": -95.5,
-			"y": -446.4609375,
-			"strokeColor": "#1e1e1e",
-			"backgroundColor": "transparent",
-			"width": 473.255859375,
-			"height": 45,
-			"seed": 257773678,
-			"groupIds": [],
-			"frameId": null,
-			"roundness": null,
-			"boundElements": [],
-			"updated": 1750232380502,
-			"link": null,
-			"locked": false,
-			"fontSize": 36,
-			"fontFamily": 1,
-			"text": "Linked With Power Provider",
-			"rawText": "Linked With Power Provider",
-			"textAlign": "left",
-			"verticalAlign": "top",
-			"containerId": null,
-			"originalText": "Linked With Power Provider",
-			"lineHeight": 1.25,
-			"baseline": 32
 		},
 		{
 			"type": "rectangle",
@@ -417,8 +342,8 @@ Registered as Power Consumer ^zwMg0V1d
 		},
 		{
 			"type": "arrow",
-			"version": 207,
-			"versionNonce": 1478378091,
+			"version": 211,
+			"versionNonce": 86575659,
 			"isDeleted": false,
 			"id": "qZ8pwHTkcva5D9Ltj4V-2",
 			"fillStyle": "solid",
@@ -440,7 +365,7 @@ Registered as Power Consumer ^zwMg0V1d
 				"type": 2
 			},
 			"boundElements": [],
-			"updated": 1750232368006,
+			"updated": 1750236437227,
 			"link": null,
 			"locked": false,
 			"startBinding": {
@@ -469,8 +394,8 @@ Registered as Power Consumer ^zwMg0V1d
 		},
 		{
 			"type": "arrow",
-			"version": 76,
-			"versionNonce": 708502443,
+			"version": 80,
+			"versionNonce": 1032239979,
 			"isDeleted": false,
 			"id": "d-bmZfWMD6ZxxS9i1Kt3_",
 			"fillStyle": "solid",
@@ -492,7 +417,7 @@ Registered as Power Consumer ^zwMg0V1d
 				"type": 2
 			},
 			"boundElements": [],
-			"updated": 1750232368006,
+			"updated": 1750236437227,
 			"link": null,
 			"locked": false,
 			"startBinding": {
@@ -596,8 +521,8 @@ Registered as Power Consumer ^zwMg0V1d
 		},
 		{
 			"type": "arrow",
-			"version": 108,
-			"versionNonce": 1194473003,
+			"version": 112,
+			"versionNonce": 681122987,
 			"isDeleted": false,
 			"id": "kzIdBMvpTGiepPY813ADr",
 			"fillStyle": "solid",
@@ -619,7 +544,7 @@ Registered as Power Consumer ^zwMg0V1d
 				"type": 2
 			},
 			"boundElements": [],
-			"updated": 1750232368006,
+			"updated": 1750236437227,
 			"link": null,
 			"locked": false,
 			"startBinding": {
@@ -727,8 +652,8 @@ Registered as Power Consumer ^zwMg0V1d
 		},
 		{
 			"type": "arrow",
-			"version": 211,
-			"versionNonce": 1991002283,
+			"version": 215,
+			"versionNonce": 1156853227,
 			"isDeleted": false,
 			"id": "uFmQcm4_mdxwRVdBW69x8",
 			"fillStyle": "solid",
@@ -750,7 +675,7 @@ Registered as Power Consumer ^zwMg0V1d
 				"type": 2
 			},
 			"boundElements": [],
-			"updated": 1750232368007,
+			"updated": 1750236437227,
 			"link": null,
 			"locked": false,
 			"startBinding": {
@@ -779,8 +704,8 @@ Registered as Power Consumer ^zwMg0V1d
 		},
 		{
 			"type": "arrow",
-			"version": 108,
-			"versionNonce": 1898732011,
+			"version": 112,
+			"versionNonce": 2083254059,
 			"isDeleted": false,
 			"id": "eWDalNRoXW0n8j1hddX_x",
 			"fillStyle": "solid",
@@ -802,7 +727,7 @@ Registered as Power Consumer ^zwMg0V1d
 				"type": 2
 			},
 			"boundElements": [],
-			"updated": 1750232368007,
+			"updated": 1750236437227,
 			"link": null,
 			"locked": false,
 			"startBinding": {
@@ -905,8 +830,8 @@ Registered as Power Consumer ^zwMg0V1d
 		},
 		{
 			"type": "text",
-			"version": 127,
-			"versionNonce": 1494027230,
+			"version": 345,
+			"versionNonce": 218493611,
 			"isDeleted": false,
 			"id": "Tlp3F1Em",
 			"fillStyle": "solid",
@@ -919,24 +844,24 @@ Registered as Power Consumer ^zwMg0V1d
 			"y": -60.4609375,
 			"strokeColor": "#1e1e1e",
 			"backgroundColor": "transparent",
-			"width": 242.39993286132812,
+			"width": 318.2397155761719,
 			"height": 50,
 			"seed": 969400622,
 			"groupIds": [],
 			"frameId": null,
 			"roundness": null,
 			"boundElements": [],
-			"updated": 1750163795497,
+			"updated": 1750236526984,
 			"link": null,
 			"locked": false,
 			"fontSize": 20,
 			"fontFamily": 1,
-			"text": "전력 공급, 생산 물품 설정,\n자원 확보등 작동 조건 만족",
-			"rawText": "전력 공급, 생산 물품 설정,\n자원 확보등 작동 조건 만족",
+			"text": "Link, Register to Power Provider\n자원 Input등 작동 조건 만족",
+			"rawText": "Link, Register to Power Provider\n자원 Input등 작동 조건 만족",
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "전력 공급, 생산 물품 설정,\n자원 확보등 작동 조건 만족",
+			"originalText": "Link, Register to Power Provider\n자원 Input등 작동 조건 만족",
 			"lineHeight": 1.25,
 			"baseline": 43
 		},
@@ -1052,70 +977,141 @@ Registered as Power Consumer ^zwMg0V1d
 			"baseline": 18
 		},
 		{
-			"id": "_3N0qnj5P1ClVyOg1m6KG",
 			"type": "ellipse",
-			"x": -270.28125,
-			"y": -304.7490234375,
-			"width": 479.375,
-			"height": 453.125,
-			"angle": 0,
-			"strokeColor": "#1e1e1e",
-			"backgroundColor": "transparent",
+			"version": 439,
+			"versionNonce": 1783383141,
+			"isDeleted": true,
+			"id": "1EpkMLribc3wZpgJDXF64",
 			"fillStyle": "solid",
 			"strokeWidth": 2,
 			"strokeStyle": "solid",
 			"roughness": 1,
 			"opacity": 100,
+			"angle": 0,
+			"x": -375.25,
+			"y": -488.0859375,
+			"strokeColor": "#1e1e1e",
+			"backgroundColor": "transparent",
+			"width": 1032.125,
+			"height": 720.625,
+			"seed": 709960750,
 			"groupIds": [],
 			"frameId": null,
 			"roundness": {
 				"type": 2
 			},
-			"seed": 1108687045,
-			"version": 184,
-			"versionNonce": 1413372523,
-			"isDeleted": false,
-			"boundElements": null,
-			"updated": 1750232387344,
+			"boundElements": [
+				{
+					"id": "mt9exeQdQSJM_7_uq8TP1",
+					"type": "arrow"
+				}
+			],
+			"updated": 1750236441497,
 			"link": null,
 			"locked": false
 		},
 		{
-			"id": "zwMg0V1d",
 			"type": "text",
-			"x": -183.40625,
-			"y": -255.9990234375,
-			"width": 300.8597412109375,
-			"height": 25,
-			"angle": 0,
-			"strokeColor": "#1e1e1e",
-			"backgroundColor": "transparent",
+			"version": 395,
+			"versionNonce": 2021753259,
+			"isDeleted": true,
+			"id": "itFlLSZl",
 			"fillStyle": "solid",
 			"strokeWidth": 2,
 			"strokeStyle": "solid",
 			"roughness": 1,
 			"opacity": 100,
+			"angle": 0,
+			"x": -95.5,
+			"y": -446.4609375,
+			"strokeColor": "#1e1e1e",
+			"backgroundColor": "transparent",
+			"width": 473.255859375,
+			"height": 45,
+			"seed": 257773678,
 			"groupIds": [],
 			"frameId": null,
 			"roundness": null,
-			"seed": 2003445893,
-			"version": 80,
-			"versionNonce": 54312683,
-			"isDeleted": false,
-			"boundElements": null,
-			"updated": 1750232410520,
+			"boundElements": [],
+			"updated": 1750236442150,
 			"link": null,
 			"locked": false,
-			"text": "Registered as Power Consumer",
-			"rawText": "Registered as Power Consumer",
-			"fontSize": 20,
+			"fontSize": 36,
 			"fontFamily": 1,
+			"text": "Linked With Power Provider",
+			"rawText": "Linked With Power Provider",
 			"textAlign": "left",
 			"verticalAlign": "top",
-			"baseline": 18,
+			"containerId": null,
+			"originalText": "Linked With Power Provider",
+			"lineHeight": 1.25,
+			"baseline": 32
+		},
+		{
+			"type": "ellipse",
+			"version": 185,
+			"versionNonce": 1497097541,
+			"isDeleted": true,
+			"id": "_3N0qnj5P1ClVyOg1m6KG",
+			"fillStyle": "solid",
+			"strokeWidth": 2,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"angle": 0,
+			"x": -270.28125,
+			"y": -304.7490234375,
+			"strokeColor": "#1e1e1e",
+			"backgroundColor": "transparent",
+			"width": 479.375,
+			"height": 453.125,
+			"seed": 1108687045,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": {
+				"type": 2
+			},
+			"boundElements": [],
+			"updated": 1750236444130,
+			"link": null,
+			"locked": false
+		},
+		{
+			"type": "text",
+			"version": 81,
+			"versionNonce": 1178194987,
+			"isDeleted": true,
+			"id": "zwMg0V1d",
+			"fillStyle": "solid",
+			"strokeWidth": 2,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"angle": 0,
+			"x": -183.40625,
+			"y": -255.9990234375,
+			"strokeColor": "#1e1e1e",
+			"backgroundColor": "transparent",
+			"width": 300.8597412109375,
+			"height": 25,
+			"seed": 2003445893,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": null,
+			"boundElements": [],
+			"updated": 1750236444484,
+			"link": null,
+			"locked": false,
+			"fontSize": 20,
+			"fontFamily": 1,
+			"text": "Registered as Power Consumer",
+			"rawText": "Registered as Power Consumer",
+			"textAlign": "left",
+			"verticalAlign": "top",
 			"containerId": null,
 			"originalText": "Registered as Power Consumer",
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"baseline": 18
 		}
 	],
 	"appState": {
@@ -1133,10 +1129,10 @@ Registered as Power Consumer ^zwMg0V1d
 		"currentItemTextAlign": "left",
 		"currentItemStartArrowhead": null,
 		"currentItemEndArrowhead": "arrow",
-		"scrollX": 703.09375,
-		"scrollY": 544.1728515625,
+		"scrollX": 707.5423387096774,
+		"scrollY": 566.1857358870968,
 		"zoom": {
-			"value": 1.6
+			"value": 1.55
 		},
 		"currentItemRoundness": "round",
 		"gridSize": null,
