@@ -2018,8 +2018,8 @@ IItemSender ^b1yhEwLo
 		},
 		{
 			"type": "arrow",
-			"version": 1369,
-			"versionNonce": 539543087,
+			"version": 1370,
+			"versionNonce": 2095220769,
 			"isDeleted": false,
 			"id": "e-RV2UCcGzOW7NXgoHo68",
 			"fillStyle": "solid",
@@ -2041,7 +2041,7 @@ IItemSender ^b1yhEwLo
 				"type": 2
 			},
 			"boundElements": [],
-			"updated": 1750664300958,
+			"updated": 1750685595772,
 			"link": null,
 			"locked": false,
 			"startBinding": {
