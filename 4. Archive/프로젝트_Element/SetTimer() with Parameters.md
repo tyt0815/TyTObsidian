@@ -17,5 +17,5 @@ void ABaseCharacter::HealOverTimeCharacter(float Value, int Count, float Delay)
 	FTimerDelegate HOTDelegate;
 	HOTDelegate.BindUFunction(this, FName("HealOverTimeCharacter"), Value, Count - 1, Delay);
 	GetWorldTimerManager().SetTimer(HealHandler, HOTDelegate, Delay, false);
-}
+}[]()
 ```
