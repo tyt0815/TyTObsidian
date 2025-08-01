@@ -4,5 +4,6 @@
   "livePreview": true,
   "attachmentFolderPath": "./Attachments",
   "alwaysUpdateLinks": true,
-  "newLinkFormat": "relative"
+  "newLinkFormat": "relative",
+  "useMarkdownLinks": false
 }

@@ -83,7 +83,7 @@
   "mdBorderColor": "Black",
   "mdCSS": "",
   "scriptEngineSettings": {},
-  "defaultTrayMode": true,
+  "defaultTrayMode": false,
   "previousRelease": "2.0.16",
   "showReleaseNotes": true,
   "showNewVersionNotification": true,
@@ -430,7 +430,7 @@
     "filenameVisible": false
   },
   "canvasImmersiveEmbed": true,
-  "startupScriptPath": "",
+  "startupScriptPath": "Excalidraw/ExcalidrawStartup",
   "openAIAPIToken": "",
   "openAIDefaultTextModel": "gpt-3.5-turbo-1106",
   "openAIDefaultVisionModel": "gpt-4-vision-preview",
