@@ -1,3 +1,7 @@
+---
+dg-publish: true
+dg-home: true
+---
 
 https://github.com/tyt0815/TyTObsidian
 # 1. TyTObsidian
