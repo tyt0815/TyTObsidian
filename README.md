@@ -1,6 +1,3 @@
----
-
----
 
 https://github.com/tyt0815/TyTObsidian
 # 1. TyTObsidian
