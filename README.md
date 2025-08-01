@@ -1,3 +1,4 @@
+
 https://github.com/tyt0815/TyTObsidian
 # 1. TyTObsidian
 - 개인적으로 공부한 것을 기록하는 문서
