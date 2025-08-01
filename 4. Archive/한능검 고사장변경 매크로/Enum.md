@@ -1,3 +1,7 @@
+---
+dg-publish: true
+---
+
 # 기본 사용법
 ```python
 from enum import Enum

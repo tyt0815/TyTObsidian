@@ -1,3 +1,7 @@
+---
+dg-publish: true
+---
+
 **아래 사이트의 글을 번역및 엔진 버전에 맞게 수정되었음.**
 - [참조](https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/)
 

@@ -1,3 +1,7 @@
+---
+dg-publish: true
+---
+
 # UButton의 OnClicked와 UUserWidget의 MouseButtonDown 이벤트
 UButton에 자체적인 OnClicked 델리게이트가 존재하고, UUserWidget은 C++기준으로 
 NativeOnPreviewMouseButtonDown, NativeOnMouseButtonDown 함수가 존재한다.

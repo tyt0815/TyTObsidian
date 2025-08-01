@@ -1,3 +1,7 @@
+---
+dg-publish: true
+---
+
 클래스 A, B가 있을때 B가 A를 상속했는지 확인하는 방법
 ```cpp
 #include <type_traits>

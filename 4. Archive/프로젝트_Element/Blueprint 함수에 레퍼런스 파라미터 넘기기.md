@@ -1,3 +1,7 @@
+---
+dg-publish: true
+---
+
 
 ```cpp
 UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)

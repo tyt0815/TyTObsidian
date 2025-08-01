@@ -1,3 +1,7 @@
+---
+dg-publish: true
+---
+
 ```cpp
 #include <iostream>
 #include <functional>
