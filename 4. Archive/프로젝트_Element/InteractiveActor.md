@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 - [x] UI위치 조정 ✅ 2024-02-25
 # UI 위치 조정
 ![[Attachments/Pasted image 20240225234505.png]]

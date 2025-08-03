@@ -1,5 +1,2 @@
 ---
-dg-publish: true
----
-
 [NVIDIA GPU Gem3 - Chapter9. Interactive Cinematic Relighting with Global Illumination](https://developer.nvidia.com/gpugems/gpugems3/part-ii-light-and-shadows/chapter-9-interactive-cinematic-relighting-global)

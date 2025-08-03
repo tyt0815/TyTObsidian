@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 [참고](https://hyo-ue4study.tistory.com/42)
 UFUNCTION()구문에 들어갈 수 있는 키워드
 

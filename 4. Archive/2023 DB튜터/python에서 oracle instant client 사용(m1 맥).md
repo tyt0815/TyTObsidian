@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 # python에서 oracle instant client 사용(m1 맥) 
 **Created at : 2023-10-30 17:30**
 # 참고 사이트

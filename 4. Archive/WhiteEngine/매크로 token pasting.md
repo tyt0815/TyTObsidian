@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 ``` c++
 #define M(x) void Token##x();
 

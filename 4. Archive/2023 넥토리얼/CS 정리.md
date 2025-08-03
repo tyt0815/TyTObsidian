@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 # CS 정리 
 **Created at : 2023-10-28 21:26**
 

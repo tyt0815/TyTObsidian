@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 ![[Attachments/Pasted image 20250720171030.png]]
 AssetAction은 위 사진과 같이 에셋을 우클릭해서 나온 컨텍스트 메뉴의 엔트리를 추가하는 방법이다.
 

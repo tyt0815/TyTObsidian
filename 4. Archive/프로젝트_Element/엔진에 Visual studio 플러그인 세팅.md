@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 https://github.com/microsoft/vc-ue-extensions#readme
 1. 플러그인을 클론한다.
 2. 엔진의 루트폴더의 Plugins폴더에 넣어준다.

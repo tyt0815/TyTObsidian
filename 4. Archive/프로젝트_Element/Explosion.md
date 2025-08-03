@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 - [x] 버그픽스: SetTimer 동작 안함 ✅ 2024-02-25
 # 문제
 ```cpp

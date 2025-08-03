@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 기본적으로 C++로 ActorComponent를 만들면 블루프린트에서 상속할 수 없다.
 아래는 기본 `UCLASS`다
 ```

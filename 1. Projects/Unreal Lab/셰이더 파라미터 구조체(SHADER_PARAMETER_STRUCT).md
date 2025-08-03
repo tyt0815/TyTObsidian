@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 셰이더 코드에 버퍼들을 묶기 위해서 정의해야하는 구조체
 ```cpp
 BEGIN_SHADER_PARAMETER_STRUCT(FMyShaderParameterStruct,)

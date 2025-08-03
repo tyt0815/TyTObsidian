@@ -1,5 +1,2 @@
 ---
-dg-publish: true
----
-
 [[unroll]]

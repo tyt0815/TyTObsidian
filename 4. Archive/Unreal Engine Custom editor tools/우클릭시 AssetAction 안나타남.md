@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 ```cpp
 class SUPERMANAGER_API UQuickAssetAction : public UAssetActionUtility
 {

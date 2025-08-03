@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 AActor클래스의 함수.
 설정된 시간 이후 자동으로 Destroy해줌.
 ```cpp

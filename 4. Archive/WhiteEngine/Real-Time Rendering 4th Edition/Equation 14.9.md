@@ -1,5 +1,2 @@
 ---
-dg-publish: true
----
-
 ![[Attachments/Pasted image 20250517185426.png]]

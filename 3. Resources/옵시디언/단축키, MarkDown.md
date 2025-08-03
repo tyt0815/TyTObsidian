@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 # 단축키, MarkDown 
 **Created at : 2023-09-17 16:40**
 

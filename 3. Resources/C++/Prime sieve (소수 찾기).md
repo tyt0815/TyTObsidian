@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 ```cpp
     vector<bool> PrimeNumbers(MAXN , true);
     PrimeNumbers[0] = PrimeNumbers[1] = false;

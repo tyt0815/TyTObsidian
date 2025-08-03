@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 **ShadowRendering.cpp**에서 콘솔 변수를 추가해 준다.
 ```cpp
 static TAutoConsoleVariable<int32> CVarFilterMethod(

@@ -13,12 +13,7 @@
   "shell_path": "",
   "user_scripts_folder": "",
   "enable_folder_templates": true,
-  "folder_templates": [
-    {
-      "folder": "/",
-      "template": "Templates/DigitalGarden Template.md"
-    }
-  ],
+  "folder_templates": [],
   "enable_file_templates": false,
   "file_templates": [
     {

@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 # vector erase() 
 **Created at : 2023-10-19 22:23**
 

@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 ![[Pasted image 20231213132929.png]]
 위 명령 프롬프트를 사용한다.
 

@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 ```cpp
 #include <memory>
 ```

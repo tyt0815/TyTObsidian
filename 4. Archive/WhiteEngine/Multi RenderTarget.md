@@ -1,7 +1,4 @@
 ---
-dg-publish: true
----
-
 GBuffer를 렌더링 하기 위해 멀티 렌더타겟을 사용함
 
 PipelineState를 생성할때 다음과 같이 해주어야 한다.
