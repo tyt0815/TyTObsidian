@@ -2,7 +2,7 @@
   "promptDelete": false,
   "newFileLocation": "current",
   "livePreview": true,
-  "attachmentFolderPath": "./Attachments",
+  "attachmentFolderPath": "./__Attachments",
   "alwaysUpdateLinks": true,
   "newLinkFormat": "relative",
   "useMarkdownLinks": false
