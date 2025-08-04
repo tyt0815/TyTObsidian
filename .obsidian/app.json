@@ -4,6 +4,7 @@
   "livePreview": true,
   "attachmentFolderPath": "./__Attachments",
   "alwaysUpdateLinks": true,
-  "newLinkFormat": "relative",
-  "useMarkdownLinks": false
+  "newLinkFormat": "absolute",
+  "useMarkdownLinks": false,
+  "showUnsupportedFiles": true
 }
