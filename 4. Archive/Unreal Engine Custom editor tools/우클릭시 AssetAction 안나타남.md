@@ -1,4 +1,3 @@
----
 ```cpp
 class SUPERMANAGER_API UQuickAssetAction : public UAssetActionUtility
 {

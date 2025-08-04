@@ -1,3 +1,2 @@
----
 ![[Attachments/Pasted image 20250515154023.png]]
 Scattering 과 participating media에 사용되는 표기법. 각각의 파라미터는 파장에 따라 달라질 수 있으며, 이를 통해 색이 있는 빛의 흡수와 산란을 구현할 수 있다. phase function의 단위는 inverse steradians 이다.(Section [[8.1.1|8.1.1]] 참고)

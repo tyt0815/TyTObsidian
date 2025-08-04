@@ -1,4 +1,3 @@
----
 [[AssetAction 항목 추가하기]]
 AssetAction으로 Slate창을 띄워보기로 한다.
 ```cpp

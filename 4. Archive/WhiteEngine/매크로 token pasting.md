@@ -1,4 +1,3 @@
----
 ``` c++
 #define M(x) void Token##x();
 

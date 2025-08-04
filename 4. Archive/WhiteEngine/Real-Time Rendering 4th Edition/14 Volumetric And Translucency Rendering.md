@@ -1,4 +1,3 @@
----
 # Paricipating media
 - 입자들(particles)로 이루어짐 volumes을 의미
 - 빛의 전달의 매질(media)로, 빛이 매개체를 통과할때 **산란(scattering)** 과 **흡수(absorption)** 이 발생

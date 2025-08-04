@@ -1,4 +1,3 @@
----
 **Created at : 2023-10-31 22:06**
 # STL(Standard Template Library)란?
 표준 템플릿 라이브러리는 C++용 일반 프로그래밍 도구 세트를 제공하는 라이브러리

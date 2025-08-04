@@ -1,4 +1,3 @@
----
 [DirectX 문서](https://learn.microsoft.com/ko-kr/windows/win32/dxmath/pg-xnamath-internals)
 # XMVECTOR
 **XMVECTOR**는 16바이트 경계에 alignment가 일어나므로 클래스의 멤버변수로 활용할땐

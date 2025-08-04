@@ -1,4 +1,3 @@
----
 - DeferredShadingRenderer.cpp
 ```cpp
 // 2465번째 줄

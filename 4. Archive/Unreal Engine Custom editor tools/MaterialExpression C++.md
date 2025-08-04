@@ -1,4 +1,3 @@
----
 5.5버전의 엔진 C++에서 MaterialExpression을 포함한 몇몇 설정은 직접적인 접근이 불가능 하고 `UMaterialEditorOnlyData`를 통해서 우회해서 접근해야 한다. 정확히 몇 버전부터 변경되었는지는 잘 모른다.
 
 - 구버전

@@ -1,4 +1,3 @@
----
 ```cpp
 UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Trigger)
 void Trigger(AActor* TriggeringActor, UPARAM(ref) TArray<AActor*>& TriggerTargets);

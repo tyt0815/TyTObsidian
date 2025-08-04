@@ -1,4 +1,3 @@
----
 # sync_with_stdio() 
 **Created at : 2023-10-16 11:38**
 ![[Pasted image 20231016113900.png]]

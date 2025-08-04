@@ -1,4 +1,3 @@
----
 ![[../../4. Archive/WhiteEngine/Attachments/Pasted image 20250413210933.png]]
 새로 추가한 ObjectType은 프로젝트 폴더의 Config/DefaultEngine.ini 파일에서 정보를 확인할 수 있다.
 

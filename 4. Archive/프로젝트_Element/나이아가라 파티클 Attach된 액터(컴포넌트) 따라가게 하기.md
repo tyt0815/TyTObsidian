@@ -1,4 +1,3 @@
----
 Local Space를 true로 해준다.
 ![[Attachments/Pasted image 20240201215430.png]]
 

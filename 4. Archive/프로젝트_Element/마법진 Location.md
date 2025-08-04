@@ -1,4 +1,3 @@
----
 # Character Front 마법진
 - [x] ChracterFront 마법진 구현 ✅ 2024-01-21
 기본공격시 마법진을 생성할 위치를 계산한다.

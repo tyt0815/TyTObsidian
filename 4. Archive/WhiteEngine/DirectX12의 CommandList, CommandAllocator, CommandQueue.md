@@ -1,4 +1,3 @@
----
 # CommandList
 - 명령을 저장하는 객체
 - Reset메소드를 통해 기존 명령들을 비우고 CommandAllocator로 부터 새로운 명령공간을 할당받을 수 있음.

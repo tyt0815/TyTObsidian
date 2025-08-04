@@ -1,5 +1,3 @@
----
-
 excalidraw-plugin: parsed
 tags: [excalidraw]
 
