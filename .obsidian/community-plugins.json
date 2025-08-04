@@ -4,5 +4,6 @@
   "obsidian-tasks-plugin",
   "obsidian-excalidraw-plugin",
   "metaedit",
-  "templater-obsidian"
+  "templater-obsidian",
+  "obsidian-git"
 ]
