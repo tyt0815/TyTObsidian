@@ -6,5 +6,12 @@
   "alwaysUpdateLinks": true,
   "newLinkFormat": "absolute",
   "useMarkdownLinks": false,
-  "showUnsupportedFiles": true
+  "showUnsupportedFiles": true,
+  "pdfExportSettings": {
+    "includeName": true,
+    "pageSize": "A3",
+    "landscape": false,
+    "margin": "2",
+    "downscalePercent": 100
+  }
 }
