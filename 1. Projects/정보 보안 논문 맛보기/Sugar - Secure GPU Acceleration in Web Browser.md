@@ -18,11 +18,10 @@ trusted components of the system이 사용하면 별도의 graphics plane
 
 
 # 1. 논문 기본 정보
-- 제목(Title):
-- 저자(Authors):
-- 학회/저널(Venue):
-- 발표/출판 연도:
-- 링크/DOI:
+- 제목(Title): [Sugar: Secure GPU Acceleration in Web Browser](https://dl.acm.org/doi/pdf/10.1145/3296957.3173186)
+- 저자(Authors): Zhihao Yao, Zongheng Ma, Yingtong Liu, Ardalan Amiri Sani, Aparna Chandramowlishwara
+- 학회/저널(Venue): ASPLOS
+- 발표/출판 연도: 2018
 
 # 2. 연구 배경 (Background & Motivation)
 ## 2.1. 이 연구가 다루는 분야는?

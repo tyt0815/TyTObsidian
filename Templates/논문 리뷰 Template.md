@@ -3,7 +3,6 @@
 - 저자(Authors):
 - 학회/저널(Venue):
 - 발표/출판 연도:
-- 링크/DOI:
 
 # 2. 연구 배경 (Background & Motivation)
 ## 2.1. 이 연구가 다루는 분야는?
