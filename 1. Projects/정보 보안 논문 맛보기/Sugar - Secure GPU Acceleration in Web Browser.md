@@ -15,3 +15,5 @@ OS 윈도우 매니저, 브라우저 코어 프로세스
 ## Primary graphics plane
 trusted components of the system이 사용하면 별도의 graphics plane
 
+
+
