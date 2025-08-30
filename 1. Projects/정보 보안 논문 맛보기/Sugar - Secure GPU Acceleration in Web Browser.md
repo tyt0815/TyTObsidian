@@ -38,7 +38,9 @@ trusted components of the system이 사용하면 별도의 graphics plane
 - WebGL은 ad hoc(필요에 따라 그때그때)방식으로 취약점에 대응해 왔다.
 	- WebGL을 브라우저내에서 GPU Process라 불리는 분리된 프로세스에 isolate 했다.
 	- WebGL API가 호출될때 런타임 security check을 수행함.
-		- Graphics plane의 취약점이 발견되면 security check룰
+		- Graphics plane의 취약점이 발견되면 security check를 추가한다.
+		- 브라우저 WebGL 구현부의 취약점은 직접 패치(보안 업데이트)를 수행한다.
+	- 
 
 # 3. 문제 정의 (Problem Definition)
 ## 3.1. 연구에서 해결하려는 핵심 문제는?
