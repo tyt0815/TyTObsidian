@@ -25,7 +25,7 @@ trusted components of the system이 사용하면 별도의 graphics plane
 
 # 2. 연구 배경 (Background & Motivation)
 ## 2.1. 이 연구가 다루는 분야는?
-
+- WebGL 보안
 ## 2.2. 기존 연구/기술의 한계는 무엇인가?
 
 ## 2.3. 왜 이 문제가 중요한가?(실제 응용/산업적 가치 등)
