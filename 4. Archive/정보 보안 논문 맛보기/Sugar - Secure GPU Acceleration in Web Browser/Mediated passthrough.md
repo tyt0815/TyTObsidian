@@ -1,5 +1,5 @@
-[[Direct passthrough]]
-[[Full emulation]]
+[[4. Archive/정보 보안 논문 맛보기/Sugar - Secure GPU Acceleration in Web Browser/Direct passthrough]]
+[[4. Archive/정보 보안 논문 맛보기/Sugar - Secure GPU Acceleration in Web Browser/Full emulation]]
 
 - 위 두 방식의 **중간** 접근법.
 - 하드웨어 자원은 **직접 접근(passthrough)** 하지만,  

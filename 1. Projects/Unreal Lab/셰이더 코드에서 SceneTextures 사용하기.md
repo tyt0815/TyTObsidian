@@ -1,4 +1,4 @@
-[[4. Archive/Unreal Lab/셰이더 파라미터 구조체(SHADER_PARAMETER_STRUCT)]]내용을 참고하여
+[[1. Projects/Unreal Lab/셰이더 파라미터 구조체(SHADER_PARAMETER_STRUCT)]]내용을 참고하여
 ```cpp
 SHADER_PARAMETER_RDG_UNIFORM_BUFFER(FSceneTextureUniformParameters, SceneTexturesUniformBuffer)
 ```

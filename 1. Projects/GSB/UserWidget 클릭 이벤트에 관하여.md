@@ -6,7 +6,7 @@ NativeOnPreviewMouseButtonDown, NativeOnMouseButtonDown 함수가 존재한다.
 2. OnClicked
 3. NativeOnMouseButtonDown
 이며, OnClicked가 클릭 이벤트를 가로채기 때문에, OnClicked가 존재하는 경우, 3. NativeOnMouseButtonDown는 실행되지 않는다.
-[[4. Archive/GSB/UI 좌클릭, 우클릭 분리하여 사용하기]]
+[[1. Projects/GSB/UI 좌클릭, 우클릭 분리하여 사용하기]]
 
 
 # DragDrop과 ButtonDown, ButtonUp

@@ -1,7 +1,7 @@
-![[4. Archive/GSB/Attachments/Pasted image 20250720171030.png]]
+![[1. Projects/GSB/Attachments/Pasted image 20250720171030.png]]
 AssetAction은 위 사진과 같이 에셋을 우클릭해서 나온 컨텍스트 메뉴의 엔트리를 추가하는 방법이다.
 
-![[4. Archive/GSB/Attachments/Pasted image 20250720171117.png]]
+![[1. Projects/GSB/Attachments/Pasted image 20250720171117.png]]
 UAssetActionUtility를 상속한 클래스를 만들어 준다.
 
 ```cpp
