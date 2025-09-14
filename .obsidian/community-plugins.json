@@ -2,5 +2,6 @@
   "table-editor-obsidian",
   "obsidian-tasks-plugin",
   "obsidian-excalidraw-plugin",
-  "obsidian-git"
+  "obsidian-git",
+  "automatic-table-of-contents"
 ]
